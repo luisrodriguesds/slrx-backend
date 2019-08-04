@@ -1,0 +1,35 @@
+<html>
+<head>
+    <title></title>
+    <style type="text/css">
+    * {margin: 0; padding: 0;}
+    body {max-width: 600px;}
+    p {margin: 20px 6.666666%; line-height: 1.5em;max-width:600px;}
+    div, div img {max-width: 100%;}
+    </style>
+</head>
+<body>
+<div>
+    <img src="http://csd.fisica.ufc.br/solicitacoes/imagens/cabecalho_email_lrx_ufc.gif" alt="Laboratório de Raios X"></div>
+    <div>
+    <p>
+        Olá Professor Sasaki!, <br> Foi solicitado um pedido de cadastro no SLRX pelo professor {{name}} com o email {{email}}. Segue suas informações:
+        <br>Instituição de Ensino: {{ies}}
+        <br>Departamento: {{department}}
+        <br>Laboratório: {{laboratory}}
+        <br>Área de pesquisa: {{research}}
+        <br>Descrição: {{description}}
+    </p>
+    <p>
+        Para liberar seu cadastro basta clicar no link a seguir:
+        <br>Link: <a href="{{linkConfirm}}">Confirmar Professor</a>
+    </p>
+    <p>
+        Para recusar seu cadastro basta clicar no link a seguir:
+        <br>Link: <a href="{{linkNoConfirm}}">Recusar Professor</a>
+
+    </p>
+    <p style="text-align:right;">Atenciosamente,<br>Laboratório de Raios-X</p>
+    <img src="http://csd.fisica.ufc.br/solicitacoes/imagens/rodape_email.gif" alt="Bloco 928, sala 34 - Campus do Pici"></div></body>
+
+</html>
