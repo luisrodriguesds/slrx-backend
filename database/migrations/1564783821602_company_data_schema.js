@@ -7,11 +7,11 @@ class CompanyDataSchema extends Schema {
   up () {
     this.create('company_data', (table) => {
       table.increments()
-      table.string('cnpq', 254).notNullable()
+      table.string('cnpj', 254).notNullable().unique()
       table.string('fantasy_name', 254).notNullable()
       table.string('company_name', 254).notNullable()
       table.string('state_registration', 254).notNullable()
-      table.string('email', 254).notNullable()
+      table.string('email_company', 254).notNullable()
       table.string('fone', 254).notNullable()
       table.string('cep', 254).notNullable()
       table.string('street', 254).notNullable()

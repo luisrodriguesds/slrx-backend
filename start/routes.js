@@ -24,6 +24,6 @@ Route.group(() => {
 	Route.get('/api/user', 'UserController.index');
 	Route.get('/api/user/confirm', 'UserController.confirm');
 	Route.get('/api/user/confirm-bond', 'UserController.confirm_bond');
-	Route.get('/api/user/confirm-professor', 'UserController.confirm_prof');
+	Route.get('/api/user/confirm-user', 'UserController.confirm_user');
 	Route.post('/api/user', 'UserController.create');
 });

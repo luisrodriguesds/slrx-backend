@@ -14,7 +14,6 @@ class CompaniesUsersSchema extends Schema {
         .references('id')
         .inTable('company_data')
         .onUpdate('CASCADE')
-        .onDelete('CASCADE')
 
       table
         .integer('user_id')

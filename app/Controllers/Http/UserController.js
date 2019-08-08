@@ -3,6 +3,7 @@ const User 			= use('App/Models/User');
 const Academy 		= use('App/Models/AcademicDatum');
 const Company 		= use('App/Models/CompanyDatum');
 const ProfStudent 	= use('App/Models/ProfessorsStudent');
+const Address 		= use('App/Models/Address');
 const CompanyUser 	= use('App/Models/CompaniesUser');
 const Mail 			= use('Mail');
 const Env 			= use('Env');
@@ -16,7 +17,7 @@ class UserController {
 
 	async create({request, response}){
 		//get data
-		let academy,academyCreate,id,linkConfirm,linkNoConfirm,buff,email_leader,buff2,linkBond;
+		let academy,academyCreate,id,linkConfirm,linkNoConfirm,buff,buff2,linkBond, email_responsable;
 		const data = request.only(['name','email', 'password', 'access_level_slug', 'cpf', 'birthday', 'sex', 'state', 'city', 'phone1']);
 		const {other_email=null, phone2=null} =request.all();
 		const access = ['aluno', 'professor', 'empresa', 'operador', 'individual'];
@@ -135,9 +136,9 @@ class UserController {
 			          });
 
 				    //Sasaki confirm professor
-				    let email_responsable 	= Env.get('MAIL_RESPONSIBLE'); 
-				   	linkConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-professor?email=${buff.toString('base64')}&confirm=true`;
-				    linkNoConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-professor?email=${buff.toString('base64')}&confirm=false`;
+				    email_responsable 	= Env.get('MAIL_RESPONSIBLE'); 
+				   	linkConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=true`;
+				    linkNoConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=false`;
 				    await Mail.send('emails.professorConfirm', {linkConfirm,linkNoConfirm, email:data.email, name:data.name, ...academy}, (message) => {
 			          message
 			              .to(email_responsable)
@@ -145,7 +146,7 @@ class UserController {
 			              .subject('SLRX - UFC | Confirmação de Cadastro de Professor')
 			        });
 				    //Return 
-				    return response.status(200).json({message:`Seu cadastro foi efetuado com sucesso! Um email de confirmação foi enviado para ${data.email}. Acesse seu email e finalize seu cadastro. <br> Além disso, foi enviado um email para ${email_leader}, seu orientador, solicitando que ele confirme seu vinculo para que possa cadastrar suas amostras no sistema.`, error:false});
+				    return response.status(200).json({message:`Seu cadastro foi efetuado com sucesso! Um email de confirmação foi enviado para ${data.email}. Acesse seu email e finalize seu cadastro. <br> Além disso, foi enviado um email para o responsável pelo labratório para que seja liberado seu acesso. Logo logo você receberá um email avisando a liberação do seu cadastro.`, error:false});
 
 			    }catch(e){
 			    	console.log(e);
@@ -153,39 +154,100 @@ class UserController {
 			    }
 	    	break;
 	    	case "empresa":
-	    		//waiting for: cnpq,fantasy_name,company_name,state_registration,email,fone,cep,street,neighborhood,number,city,state
-	    		const company = request.only(['cnpq','fantasy_name','company_name','state_registration','email','fone','cep','street','neighborhood','number','city','state']);
-	    		rules = {
-	    			cnpq:'required|min:18|max:18',
+	    		//waiting for: cnpj,fantasy_name,company_name,state_registration,email,fone,cep,street,neighborhood,number,city,state
+	    		let company = request.only(['cnpj','fantasy_name','company_name','state_registration','email_company','fone','cep','street','neighborhood','number','city','state']);
+				let {type_company} = request.all();
+				rules = {
+	    			cnpj:'required|min:18|max:18',
 	    			fantasy_name:'required',
 	    			company_name:'required',
 	    			state_registration:'required',
-	    			email:'required',
+	    			email_company:'required',
 	    			fone:'required',
 	    			cep:'required',
 	    			street:'required',
 	    			neighborhood:'required',
 	    			number:'required',
 	    			city:'required',
-	    			state:'required'
+					state:'required'
 	    		}
 	    		validation = await validate(company, rules);
 			    if (validation.fails()) {
 			    	return response.status(406).json(validation.messages());
-			    }
+				}
 
+				if(type_company != 'tecnico' && type_company != 'financeiro'){
+					return response.status(406).json({message:"Tipo de usuário de empresa deve ser Técnico ou Financeiro"});
+				}else{
+					data.access_level = (type_company == 'tecnico') ? 'Técnico' : 'Financeiro';
+					data.access_level_slug = type_company;
+				}
 	    		//Check if the cnpj exist and if is bond
 	    		let checkCompany = await Company.findBy({cnpj:company.cnpj});
 	    		if (checkCompany == null) {
-	    			checkCompany 	= await Company.create({...company});
-				    let {id} 		= await User.create({...data, other_email, phone2, access_level:"Empresa"});
-	    			//Parei aqui
-	    		}
+	    			company 		= await Company.create({...company});
+				    const user 		= await User.create({...data, other_email, phone2});
+					const comUser 	= await CompanyUser.create({company_id:company.id, user_id:user.id});
+					
+					//send the emails
+					//confirm register in email
+					buff = new Buffer(data.email); 
+					linkConfirm =  `${Env.get('APP_URL')}/api/user/confirm?email=${buff.toString('base64')}`;
+					await Mail.send('emails.confirmEmail', {...data, linkConfirm}, (message) => {
+					message
+						.to(data.email)
+						.from('<from-email>')
+						.subject('SLRX - UFC | Confirmação de Cadastro')
+					});
+
+					//Sasaki confirm professor
+				    email_responsable 	= Env.get('MAIL_RESPONSIBLE'); 
+				   	linkConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=true`;
+				    linkNoConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=false`;
+				    await Mail.send('emails.companyConfirm', {linkConfirm,linkNoConfirm, company,...data}, (message) => {
+			          message
+			              .to(email_responsable)
+			              .from('<from-email>')
+			              .subject('SLRX - UFC | Confirmação de Cadastro de Empresa')
+			        });
+				    return response.status(200).json({message:`Seu cadastro foi efetuado com sucesso! Um email de confirmação foi enviado para ${data.email}. Acesse seu email e finalize seu cadastro. <br> Além disso, foi enviado um email para o responsável pelo labratório para que seja liberado seu acesso. Logo logo você receberá um email avisando a liberação do seu cadastro.`, error:false});
+					
+				}
+				
+				company 		= checkCompany;
+				const user 		= await User.create({...data, other_email, phone2});
+				const comUser 	= await CompanyUser.create({company_id:company.id, user_id:user.id});
+				
+				//send the emails
+				//confirm register in email
+				buff = new Buffer(data.email); 
+				linkConfirm =  `${Env.get('APP_URL')}/api/user/confirm?email=${buff.toString('base64')}`;
+				await Mail.send('emails.confirmEmail', {...data, linkConfirm}, (message) => {
+				message
+					.to(data.email)
+					.from('<from-email>')
+					.subject('SLRX - UFC | Confirmação de Cadastro')
+				});
+
+				//Sasaki confirm professor
+				email_responsable 	= Env.get('MAIL_RESPONSIBLE'); 
+				linkConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=true`;
+				linkNoConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=false`;
+				await Mail.send('emails.companyConfirm', {linkConfirm,linkNoConfirm, company,...data}, (message) => {
+					message
+						.to(email_responsable)
+						.from('<from-email>')
+						.subject('SLRX - UFC | Confirmação de Cadastro de Empresa')
+				});
+
+				return response.status(200).json({message:`Seu cadastro foi efetuado com sucesso! Um email de confirmação foi enviado para ${data.email}. Acesse seu email e finalize seu cadastro. <br> Além disso, foi enviado um email para o responsável pelo labratório para que seja liberado seu acesso. Logo logo você receberá um email avisando a liberação do seu cadastro.`, error:false});
+				
+			
 
 	    	break;
 	    	case "operador":
-	    		//waiting for: nothing more
-
+	    		//waiting for: cep_address,street_address,neighborhood_address,number_address,city_address,state_address
+				
 	    	break;
 	    	case "individual":
 	    		//waiting for: nothing more
@@ -205,7 +267,7 @@ class UserController {
 		return response.status(200).json({message:"Email confirmado com sucesso"});
 	}
 
-	async confirm_prof({request, response}){
+	async confirm_user({request, response}){
 		let {email, confirm} = request.all();
 		let buff = new Buffer(email, 'base64');
     	email = buff.toString('ascii');
