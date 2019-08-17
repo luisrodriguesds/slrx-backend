@@ -22,10 +22,20 @@ Route.get('/', () => {
 
 Route.group(() => {
 	Route.get('/api/user', 'UserController.index');
+
 	Route.post('/api/user/auth', 'UserController.authentication');
-	Route.get('/api/user/logout', 'UserController.logout');
+	Route.get('/api/user/token', 'UserController.token').middleware(['auth']);
+	Route.get('/api/user/logout', 'UserController.logout').middleware(['auth']);
+
 	Route.get('/api/user/confirm', 'UserController.confirm');
 	Route.get('/api/user/confirm-bond', 'UserController.confirm_bond');
 	Route.get('/api/user/confirm-user', 'UserController.confirm_user');
+
 	Route.post('/api/user', 'UserController.create');
+
+  	Route.get('/api/user/request-newpass/:email', 'UserController.request_newpass');
+  	Route.post('/api/user/set-newpass', 'UserController.set_newpass');
+  	Route.put('/api/user/change-pass/:id', 'UserController.change_pass').middleware(['auth']);
+
+
 });

@@ -5,10 +5,11 @@ const Company 		= use('App/Models/CompanyDatum');
 const ProfStudent 	= use('App/Models/ProfessorsStudent');
 const Address 		= use('App/Models/Address');
 const CompanyUser 	= use('App/Models/CompaniesUser');
+const RequestPass 	= use('App/Models/RequestPass');
 const Mail 			= use('Mail');
 const Env 			= use('Env');
-
-const { validate } = use('Validator');
+const { validate } 	= use('Validator');
+const Hash 			= use('Hash');
 
 class UserController {
 
@@ -18,14 +19,25 @@ class UserController {
 
 	async token({auth}){
         const user = await User.findBy('id', auth.user.id);
-        //user.load('center');
+        await user.load('address');
+        await user.load('academic');
+        await user.load('company');
         return user;
     }
 
-	async authentication({request, auth}){
+	async authentication({request, response, auth}){
         const {email, password} = request.all();
         const token = await auth.attempt(email, password);
-
+        //Check conform and email confirm
+        let user = await User.findBy('email', email);
+        	user = JSON.parse(JSON.stringify(user)); //O resultado vido de finBy traz um objeto muito maior do que, então se usa essa conversao para que se traga somente os campos
+        if (user.confirm == 0) {
+	    	return response.status(406).json({message:"Responsável pelo Laboratório ainda não aprovou a liberação de seu acesso, entre em contato."}); 
+        }else if (user.confirm_email == 0) {
+	    	return response.status(406).json({message:"Email ainda não foi confirmado. Acesse seu conta e libere seu cadastro."}); 
+        }else if (user.status == 0) {
+	    	return response.status(406).json({message:"Essa conta foi desativada. Entre em contato com o responsável pelo Laboratório."}); 
+        }
         return token;
     }
 
@@ -207,7 +219,7 @@ class UserController {
 	    		if (checkCompany == null) {
 	    			company 		= await Company.create({...company});
 				    const user 		= await User.create({...data, other_email, phone2});
-					const comUser 	= await CompanyUser.create({company_id:company.id, user_id:user.id});
+					const comUser 	= await CompanyUser.create({company_datum_id:company.id, user_id:user.id});
 					
 					//send the emails
 					//confirm register in email
@@ -428,6 +440,79 @@ class UserController {
 
     	return response.status(200).json({message:"Vínculo efetuado com sucesso!"});
 	}
+
+	async request_newpass({params, response}){
+        const email = (params.email == undefined) ? 0 : params.email;
+        let   user  = await User.findBy('email', email);
+        const key   = await Hash.make(`${email}-${Math.random()*10000}`);
+        
+        if(user == null){
+            return response.status(406).json({"message":"Usuário não encontrado."})
+        }
+        user = JSON.parse(JSON.stringify(user));
+
+        const link = `${Env.get('LINK_SET_NEW_PASS')}?token=${key}`;
+
+        await Mail.send('emails.requestNewpass', {...user, link}, (message) => {
+            message
+                .to(email)
+                .from('<from-email>')
+                .subject('SLRX - UFC | Recuperação de Senha')
+            })
+        
+        await RequestPass.create({user_id:user.id, key});
+        return key;
+    }
+
+    async set_newpass({request, response}){
+        const {token, password}  = request.only(['token', 'password']);
+        const data = {password};
+        const req = await RequestPass.findBy('key', token);
+
+        if (req == null) {
+            return response.status(406).json({"message":"Chave de acesso não foi encontrada. Tente a recuperação de senha novamente."})            
+        }
+
+        //Comparar as datas
+        const currentDate   = new Date();
+        const rowDate       = new Date(req.created_at);
+        let dif             = currentDate - rowDate;
+            dif             = Math.floor(dif/(1000*60*60));
+
+        if (dif >= 2) {
+            return response.status(406).json({"message":"Invalid token"})         
+        }
+        // console.log(req.user_id);
+        const user = await User.findBy('id', req.user_id);
+        user.merge(data);
+        await user.save();
+
+        //apagar token
+        await req.delete();
+        return user;
+    }
+
+    async change_newpass({ request, params, response }) {
+        // get currently authenticated user
+        const user = await User.findBy('id', params.id);
+        
+        // verify if current password matches
+        const verifyPassword = await Hash.verify(
+            request.input('password'),
+            user.password
+        )
+        
+        // display appropriate message
+        if (!verifyPassword) {
+            return response.status(400).json({"message": 'As senhas não correspondem, por favor tente novamente.'});
+        }
+    
+        // hash and save new password
+        user.password = request.input('newPassword')
+        await user.save()
+    
+        return response.status(406).json({"message":"Senha alterada com suecsso!"});
+    }
 }
 
 module.exports = UserController

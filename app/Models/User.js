@@ -5,8 +5,9 @@ const Model = use('Model')
 
 /** @type {import('@adonisjs/framework/src/Hash')} */
 const Hash = use('Hash')
-/** Codificacao das senhas será o SHAR-1 **/
-const jsSHA = use("jssha");
+
+// Data format
+const dateformat = use('dateformat');
 
 class User extends Model {
   static boot () {
@@ -18,11 +19,6 @@ class User extends Model {
      */
     this.addHook('beforeSave', async (userInstance) => {
       if (userInstance.dirty.password) {
-
-        const shaObj = new jsSHA("SHA-1", "TEXT");
-        shaObj.update(userInstance.password);
-        // var _novaSenha = shaObj.getHash("HEX");
-        // userInstance.password = shaObj.getHash("HEX");
         userInstance.password = await Hash.make(userInstance.password)
       }
     })
@@ -31,14 +27,24 @@ class User extends Model {
   static get hidden () {
     return ['password']
   }
+  
+  //Gettings and Settings
+  getBirthday({birthday}){
+    return dateformat(birthday, "dd/mm/yyyy");
+  }
 
   //Relacoes
   academic(){
     return this.hasOne('App/Models/AcademicDatum');
   }
 
-  company(){
-    return this.hasOne('App/Models/CompanyDatum');
+
+  company () {
+    return this.belongsToMany('App/Models/CompanyDatum').pivotTable('companies_users');
+  }
+
+  address(){
+    return this.hasOne('App/Models/Address');
   }
 
   /**

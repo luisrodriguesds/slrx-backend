@@ -9,7 +9,7 @@ class CompaniesUsersSchema extends Schema {
       table.increments()
       
       table
-        .integer('company_id')
+        .integer('company_datum_id')
         .unsigned()
         .references('id')
         .inTable('company_data')
