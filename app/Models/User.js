@@ -22,8 +22,8 @@ class User extends Model {
         const shaObj = new jsSHA("SHA-1", "TEXT");
         shaObj.update(userInstance.password);
         // var _novaSenha = shaObj.getHash("HEX");
-        userInstance.password = shaObj.getHash("HEX");
-        // userInstance.password = await Hash.make(userInstance.password)
+        // userInstance.password = shaObj.getHash("HEX");
+        userInstance.password = await Hash.make(userInstance.password)
       }
     })
   }

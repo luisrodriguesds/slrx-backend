@@ -17,11 +17,13 @@
 const Route = use('Route')
 
 Route.get('/', () => {
-  return { greeting: 'Hello world in JSON' }
+  return { message: "API it's working on port" }
 })
 
 Route.group(() => {
 	Route.get('/api/user', 'UserController.index');
+	Route.post('/api/user/auth', 'UserController.authentication');
+	Route.get('/api/user/logout', 'UserController.logout');
 	Route.get('/api/user/confirm', 'UserController.confirm');
 	Route.get('/api/user/confirm-bond', 'UserController.confirm_bond');
 	Route.get('/api/user/confirm-user', 'UserController.confirm_user');
