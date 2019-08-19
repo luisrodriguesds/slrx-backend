@@ -36,6 +36,8 @@ Route.group(() => {
   	Route.get('/api/user/request-newpass/:email', 'UserController.request_newpass');
   	Route.post('/api/user/set-newpass', 'UserController.set_newpass');
   	Route.put('/api/user/change-pass/:id', 'UserController.change_pass').middleware(['auth']);
+});
 
-
+Route.group(() => {
+	Route.get('/api/company/cnpj', 'CompanyDatumController.for_cnpj');
 });

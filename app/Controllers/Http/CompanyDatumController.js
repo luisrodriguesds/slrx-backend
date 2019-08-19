@@ -4,6 +4,9 @@
 /** @typedef {import('@adonisjs/framework/src/Response')} Response */
 /** @typedef {import('@adonisjs/framework/src/View')} View */
 
+const Company 		= use('App/Models/CompanyDatum');
+
+
 /**
  * Resourceful controller for interacting with companydata
  */
@@ -18,6 +21,12 @@ class CompanyDatumController {
    * @param {View} ctx.view
    */
   async index ({ request, response, view }) {
+  }
+
+  async for_cnpj ({ request, response, params }) {
+    const {cnpj} = request.all();
+    const company = await Company.findBy('cnpj', cnpj);
+    return company;
   }
 
   /**

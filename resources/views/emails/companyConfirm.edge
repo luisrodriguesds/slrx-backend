@@ -16,9 +16,9 @@
         Olá Professor Sasaki! <br> Foi solicitado um pedido de cadastro no SLRX pelo {{access_level}} da empresa {{company.fantasy_name}} com o nome de {{name}} e o email {{email}}. Segue suas informações:
         <br>Nome da empresa: {{company.company_name}}
         <br>CNPJ: {{company.cnpj}}
-        <br>Inscrição Estadual: {{company.state_registration}}
-        <br>Email da Empresa: {{company.email_company}}
-        <br>Fone: {{company.fone}}
+        <br>Inscrição Estadual: {{company.state_registration && company.state_registration }}
+        <br>Email da Empresa: {{company.company_email}}
+        <br>Fone: {{company.company_phone}}
     </p>
     <p>
         Para liberar seu cadastro basta clicar no link a seguir:

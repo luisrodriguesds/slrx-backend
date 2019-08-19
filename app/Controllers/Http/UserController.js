@@ -187,21 +187,20 @@ class UserController {
 	    	break;
 	    	case "empresa":
 	    		//waiting for: cnpj,fantasy_name,company_name,state_registration,email,fone,cep,street,neighborhood,number,city,state
-	    		let company = request.only(['cnpj','fantasy_name','company_name','state_registration','email_company','fone','cep','street','neighborhood','number','city','state']);
+	    		let company = request.only(['cnpj','fantasy_name','company_name','state_registration','company_email','company_phone','cep','street','neighborhood','number','company_city','company_state']);
 				let {type_company} = request.all();
 				rules = {
 	    			cnpj:'required|min:18|max:18',
 	    			fantasy_name:'required',
 	    			company_name:'required',
-	    			state_registration:'required',
-	    			email_company:'required',
-	    			fone:'required',
+	    			company_email:'required',
+	    			company_phone:'required',
 	    			cep:'required',
 	    			street:'required',
 	    			neighborhood:'required',
 	    			number:'required',
-	    			city:'required',
-					state:'required'
+	    			company_city:'required',
+					company_state:'required'
 	    		}
 	    		validation = await validate(company, rules);
 			    if (validation.fails()) {
