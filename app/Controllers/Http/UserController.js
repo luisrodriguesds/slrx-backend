@@ -32,11 +32,11 @@ class UserController {
         let user = await User.findBy('email', email);
         	user = JSON.parse(JSON.stringify(user)); //O resultado vido de finBy traz um objeto muito maior do que, então se usa essa conversao para que se traga somente os campos
         if (user.confirm == 0) {
-	    	return response.status(406).json({message:"Responsável pelo Laboratório ainda não aprovou a liberação de seu acesso, entre em contato."}); 
+	    	return response.status(200).json({message:"Responsável pelo Laboratório ainda não aprovou a liberação de seu acesso, entre em contato.", error:true}); 
         }else if (user.confirm_email == 0) {
-	    	return response.status(406).json({message:"Email ainda não foi confirmado. Acesse seu conta e libere seu cadastro."}); 
+	    	return response.status(200).json({message:"Email ainda não foi confirmado. Acesse seu conta e libere seu cadastro.", error:true}); 
         }else if (user.status == 0) {
-	    	return response.status(406).json({message:"Essa conta foi desativada. Entre em contato com o responsável pelo Laboratório."}); 
+	    	return response.status(200).json({message:"Essa conta foi desativada. Entre em contato com o responsável pelo Laboratório.", error:true}); 
         }
         return token;
     }
@@ -51,7 +51,7 @@ class UserController {
 		let academy,academyCreate,id,linkConfirm,linkNoConfirm,buff,buff2,linkBond, email_responsable, user, userAddress;
 		const data = request.only(['name','email', 'password', 'access_level_slug', 'cpf', 'birthday', 'sex', 'state', 'city', 'phone1']);
 		const {other_email=null, phone2=null} =request.all();
-		const access = ['aluno', 'professor', 'empresa', 'operador', 'autonimo'];
+		const access = ['aluno', 'professor', 'empresa', 'operador', 'autonomo'];
 			  email_responsable = Env.get('MAIL_RESPONSIBLE'); 
 		
 		//Rules
@@ -59,7 +59,7 @@ class UserController {
 		  name:'required|min:3',
 	      email: 'required|email|unique:users,email',
 	      password: 'required|min:8',
-	      access_level_slug:'in:aluno,professor,empresa,operador,autonimo',
+	      access_level_slug:'in:aluno,professor,empresa,operador,autonomo',
 	      cpf:'required|min:14|max:14',
 	      birthday:'date',
 	      sex:'required|min:1|max:2',
@@ -71,7 +71,7 @@ class UserController {
 	    //Validation
 	    let validation = await validate(data, rules);
 	    if (validation.fails()) {
-	    	return response.status(406).json(validation.messages());
+	    	return response.status(200).json({...validation.messages()[0], error:true});
 	    }
 
 	    //Switch
@@ -90,14 +90,14 @@ class UserController {
 
 	    		validation = await validate(academy, rules);
 			    if (validation.fails()) {
-			    	return response.status(406).json(validation.messages());
+			    	return response.status(200).json({...validation.messages()[0], error:true});
 			    }
 			    
 			    //Check if the professor is registered
 				let {email_leader} 	= request.all(); 
 				let email_prof		= await User.findBy({email:email_leader, access_level_slug:"professor", confirm:1});
 				if (email_prof == null) {
-			    	return response.status(406).json({message:"Esse professor/orientador não tem cadastro válido com o email informado. Por favor, digite um email de orientador de uma conta válida.", error:true});
+			    	return response.status(200).json({message:"Esse professor/orientador não tem cadastro válido com o email informado. Por favor, digite um email de orientador de uma conta válida.", error:true});
 				}
 
 			    try{
@@ -132,7 +132,7 @@ class UserController {
 
 			    }catch(e){
 			    	console.log(e);
-			    	return response.status(500).json({message:"Ocorreu algum erro, tente novamente mais tarde", error:true});
+			    	return response.status(200).json({message:"Ocorreu algum erro, tente novamente mais tarde", error:true});
 			    }
 	    	break;
 	    	case "professor":
@@ -149,7 +149,7 @@ class UserController {
 
 	    		validation = await validate(academy, rules);
 			    if (validation.fails()) {
-			    	return response.status(406).json(validation.messages());
+			    	return response.status(200).json({...validation.messages()[0], error:true});
 			    }
 
 			    try{
@@ -182,7 +182,7 @@ class UserController {
 
 			    }catch(e){
 			    	console.log(e);
-			    	return response.status(500).json({message:"Ocorreu algum erro, tente novamente mais tarde", erro:true});
+			    	return response.status(500).json({message:"Ocorreu algum erro, tente novamente mais tarde", error:true});
 			    }
 	    	break;
 	    	case "empresa":
@@ -205,11 +205,11 @@ class UserController {
 	    		}
 	    		validation = await validate(company, rules);
 			    if (validation.fails()) {
-			    	return response.status(406).json(validation.messages());
+			    	return response.status(200).json({...validation.messages()[0], error:true});
 				}
 
 				if(type_company != 'tecnico' && type_company != 'financeiro'){
-					return response.status(406).json({message:"Tipo de usuário de empresa deve ser Técnico ou Financeiro"});
+					return response.status(200).json({message:"Tipo de usuário de empresa deve ser Técnico ou Financeiro", error:true});
 				}else{
 					data.access_level = (type_company == 'tecnico') ? 'Técnico' : 'Financeiro';
 					data.access_level_slug = type_company;
@@ -243,7 +243,6 @@ class UserController {
 			              .subject('SLRX - UFC | Confirmação de Cadastro de Empresa')
 			        });
 				    return response.status(200).json({message:`Seu cadastro foi efetuado com sucesso! Um email de confirmação foi enviado para ${data.email}. Acesse seu email e finalize seu cadastro. <br> Além disso, foi enviado um email para o responsável pelo labratório para que seja liberado seu acesso. Logo logo você receberá um email avisando a liberação do seu cadastro.`, error:false});
-					
 				}
 				
 				company 		= checkCompany;
@@ -288,7 +287,7 @@ class UserController {
 
 	    		validation = await validate(operator, rules);
 	    		if (validation.fails()) {
-			    	return response.status(406).json(validation.messages());
+			    	return response.status(200).json({...validation.messages()[0], error:true});
 				}
 
 					  user = await User.create({...data, other_email, phone2, access_level:"Operador"});
@@ -318,7 +317,7 @@ class UserController {
 				return response.status(200).json({message:`Seu cadastro foi efetuado com sucesso! Um email de confirmação foi enviado para ${data.email}. Acesse seu email e finalize seu cadastro. <br> Além disso, foi enviado um email para o responsável pelo labratório para que seja liberado seu acesso. Logo logo você receberá um email avisando a liberação do seu cadastro.`, error:false});
 				
 	    	break;
-	    	case "autonimo":
+	    	case "autonomo":
 	    		//waiting for: nothing more
 	    		let freelance = request.only(['cep_address','street_address','neighborhood_address','number_address','city_address','state_address']);
 				rules = {
@@ -332,7 +331,7 @@ class UserController {
 
 	    		validation = await validate(freelance, rules);
 	    		if (validation.fails()) {
-			    	return response.status(406).json(validation.messages());
+			    	return response.status(200).json({...validation.messages()[0], error:true});
 				}
 
 					  user = await User.create({...data, other_email, phone2, access_level:"Autônomo"});
@@ -360,7 +359,6 @@ class UserController {
 				});
 
 				return response.status(200).json({message:`Seu cadastro foi efetuado com sucesso! Um email de confirmação foi enviado para ${data.email}. Acesse seu email e finalize seu cadastro. <br> Além disso, foi enviado um email para o responsável pelo labratório para que seja liberado seu acesso. Logo logo você receberá um email avisando a liberação do seu cadastro.`, error:false});
-				
 	    	break;
 	    }
 	}
@@ -373,7 +371,7 @@ class UserController {
     	
     	await User.query().where('email', email).update({confirm_email:1});
 		
-		return response.status(200).json({message:"Email confirmado com sucesso"});
+		return response.status(200).json({message:"Email confirmado com sucesso", error:false});
 	}
 
 	async confirm_user({request, response}){
@@ -389,7 +387,7 @@ class UserController {
 	              .from('<from-email>')
 	              .subject('SLRX - UFC | Liberação de Acesso')
 	        });
-	        return response.status(200).json({message:"Liberação efetuada com sucesso"});
+	        return response.status(200).json({message:"Liberação efetuada com sucesso", error:false});
     	}else{
     		await User.query().where('email', email).update({confirm:0});
     		await Mail.send('emails.accessDenied', {email}, (message) => {
@@ -398,7 +396,7 @@ class UserController {
 	              .from('<from-email>')
 	              .subject('SLRX - UFC | Liberação de Acesso')
 	        });
-	        return response.status(200).json({message:"Cadastro recusado"});
+	        return response.status(200).json({message:"Cadastro recusado", error:false});
 
     	}
 	}
@@ -415,13 +413,13 @@ class UserController {
 
     	//If exist
     	if (studant == null || prof == null) {
-    		return response.status(406).json({message:"Aluno ou Professor não existe(m)"});
+    		return response.status(200).json({message:"Aluno ou Professor não existe(m)", error:true});
     	}
 
     	//If already exist in pivotTable
     	const prof_st = await ProfStudent.findBy({professor_id:prof.id, studant_id:studant.id});
     	if (prof_st != null) {
-    		return response.status(406).json({message:"Aluno e Professor já vinculados"});
+    		return response.status(200).json({message:"Aluno e Professor já vinculados", error:true});
     	}
 
     	//Cria vinculo
@@ -438,7 +436,7 @@ class UserController {
               .subject('SLRX - UFC | Liberação de Acesso')
         });
 
-    	return response.status(200).json({message:"Vínculo efetuado com sucesso!"});
+    	return response.status(200).json({message:"Vínculo efetuado com sucesso!", error:false});
 	}
 
 	async request_newpass({params, response}){
@@ -447,7 +445,7 @@ class UserController {
         const key   = await Hash.make(`${email}-${Math.random()*10000}`);
         
         if(user == null){
-            return response.status(406).json({"message":"Usuário não encontrado."})
+            return response.status(200).json({"message":"Usuário não encontrado.", error:true})
         }
         user = JSON.parse(JSON.stringify(user));
 
@@ -470,7 +468,7 @@ class UserController {
         const req = await RequestPass.findBy('key', token);
 
         if (req == null) {
-            return response.status(406).json({"message":"Chave de acesso não foi encontrada. Tente a recuperação de senha novamente."})            
+            return response.status(200).json({"message":"Chave de acesso não foi encontrada. Tente a recuperação de senha novamente.", error:true})            
         }
 
         //Comparar as datas
@@ -480,7 +478,7 @@ class UserController {
             dif             = Math.floor(dif/(1000*60*60));
 
         if (dif >= 2) {
-            return response.status(406).json({"message":"Invalid token"})         
+            return response.status(200).json({"message":"Chave de acesso está fora do prazo permitido", error:true});         
         }
         // console.log(req.user_id);
         const user = await User.findBy('id', req.user_id);
@@ -504,14 +502,14 @@ class UserController {
         
         // display appropriate message
         if (!verifyPassword) {
-            return response.status(400).json({"message": 'As senhas não correspondem, por favor tente novamente.'});
+            return response.status(200).json({"message": 'As senhas não correspondem, por favor tente novamente.', error:true});
         }
     
         // hash and save new password
         user.password = request.input('newPassword')
         await user.save()
     
-        return response.status(406).json({"message":"Senha alterada com suecsso!"});
+        return response.status(200).json({"message":"Senha alterada com suecsso!", error:false});
     }
 }
 
