@@ -26,25 +26,43 @@ class UserController {
     }
 
 	async authentication({request, response, auth}){
-        const {email, password} = request.all();
-        const token = await auth.attempt(email, password);
+		const {email, password} = request.all();
+		
+		//Validation
+		//Rules
+		let rules = {
+			email: 'required|email',
+			password: 'required|min:8'
+		}
+
+		//Validation
+		let validation = await validate({email, password}, rules);
+		if (validation.fails()) {
+			return response.status(200).json({...validation.messages()[0], error:true});
+		}
+
         //Check conform and email confirm
         let user = await User.findBy('email', email);
         	user = JSON.parse(JSON.stringify(user)); //O resultado vido de finBy traz um objeto muito maior do que, então se usa essa conversao para que se traga somente os campos
-        if (user.confirm == 0) {
+        if(user == null){
+	    	return response.status(200).json({message:"Usuário não encontrado", error:true}); 			
+		}else if (user.confirm == 0) {
 	    	return response.status(200).json({message:"Responsável pelo Laboratório ainda não aprovou a liberação de seu acesso, entre em contato.", error:true}); 
         }else if (user.confirm_email == 0) {
-	    	return response.status(200).json({message:"Email ainda não foi confirmado. Acesse seu conta e libere seu cadastro.", error:true}); 
+	    	return response.status(200).json({message:"Email ainda não foi confirmado. Acesse sua caixa de entrada e libere seu cadastro.", error:true}); 
         }else if (user.status == 0) {
 	    	return response.status(200).json({message:"Essa conta foi desativada. Entre em contato com o responsável pelo Laboratório.", error:true}); 
-        }
+		}
+        const token = await auth.attempt(email, password);
+		
         return token;
     }
 
-    async logout({auth}){
-        await auth.logout()
-        return true;
-    }
+    async logout({ request, response, auth }) { 
+	  await auth.check()
+	  const token = auth.getAuthHeader()
+      return await auth.revokeTokens([token]);
+  }
 
 	async create({request, response}){
 		//get data
@@ -246,7 +264,7 @@ class UserController {
 				
 				company 		= checkCompany;
 				user 			= await User.create({...data, other_email, phone2});
-				const comUser 	= await CompanyUser.create({company_id:company.id, user_id:user.id});
+				const comUser 	= await CompanyUser.create({company_datum_id:company.id, user_id:user.id});
 				
 				//send the emails
 				//confirm register in email
@@ -439,15 +457,23 @@ class UserController {
 	}
 
 	async request_newpass({params, response}){
-        const email = (params.email == undefined) ? 0 : params.email;
-        let   user  = await User.findBy('email', email);
-        const key   = await Hash.make(`${email}-${Math.random()*10000}`);
-        
-        if(user == null){
-            return response.status(200).json({"message":"Usuário não encontrado.", error:true})
-        }
-        user = JSON.parse(JSON.stringify(user));
+		const email = (params.email == undefined) ? 0 : params.email;
+		const rules = {
+			email:'required|email'
+		}
+		//Validation
+		let validation = await validate({email}, rules);
+		if (validation.fails()) {
+			return response.status(200).json({...validation.messages()[0], error:true});
+		}
 
+        let   user  = await User.findBy('email', email);
+        if(user == null){
+            return response.status(200).json({"message":"Usuário não encontrado.", error:true});
+		}
+		user = JSON.parse(JSON.stringify(user));
+		
+        const key   = await Hash.make(`${email}-${Math.random()*10000}`);
         const link = `${Env.get('LINK_SET_NEW_PASS')}?token=${key}`;
 
         await Mail.send('emails.requestNewpass', {...user, link}, (message) => {
@@ -458,12 +484,22 @@ class UserController {
             })
         
         await RequestPass.create({user_id:user.id, key});
-        return key;
+        return response.status(200).json({"message":"Um chave de acesso foi enviada para seu email. Por favor verifique sua caixa de entrada e recupere sua senha.", error:false, key});
     }
 
     async set_newpass({request, response}){
-        const {token, password}  = request.only(['token', 'password']);
-        const data = {password};
+		const {token, password}  = request.all();
+		const rules = {
+			password:'required|min:8'
+		};
+
+		//Validation
+		let validation = await validate({password}, rules);
+		if (validation.fails()) {
+			return response.status(200).json({...validation.messages()[0], error:true});
+		}
+
+		const data = {password};
         const req = await RequestPass.findBy('key', token);
 
         if (req == null) {
@@ -486,7 +522,7 @@ class UserController {
 
         //apagar token
         await req.delete();
-        return user;
+        return response.status(200).json({"message":"Sua senha foi alterada com sucesso!", error:false});
     }
 
     async change_newpass({ request, params, response }) {
