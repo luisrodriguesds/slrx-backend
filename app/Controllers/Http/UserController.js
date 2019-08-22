@@ -17,12 +17,18 @@ class UserController {
 
 	}
 
-	async token({auth}){
+	async token({response, auth}){
+		try {
+			await auth.check();
+		} catch (error) {
+			return response.status(200).json({message:"Usuário não está logado", error:true});
+		}
+
         const user = await User.findBy('id', auth.user.id);
         await user.load('address');
         await user.load('academic');
         await user.load('company');
-        return user;
+        return response.status(200).json({user, error:false});
     }
 
 	async authentication({request, response, auth}){
@@ -53,12 +59,16 @@ class UserController {
         }else if (user.status == 0) {
 	    	return response.status(200).json({message:"Essa conta foi desativada. Entre em contato com o responsável pelo Laboratório.", error:true}); 
 		}
-        const token = await auth.attempt(email, password);
-		
-        return token;
+
+		try {
+			const token = await auth.attempt(email, password);
+			return token;
+		} catch (error) {
+	    	return response.status(200).json({message:"Senha incorreta! Tente novamente ou clique em esqueci minha senha!", error:true}); 			
+		}
     }
 
-    async logout({ request, response, auth }) { 
+    async logout({auth }) { 
 	  await auth.check()
 	  const token = auth.getAuthHeader()
       return await auth.revokeTokens([token]);
