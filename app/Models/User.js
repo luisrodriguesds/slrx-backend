@@ -29,15 +29,14 @@ class User extends Model {
   }
   
   //Gettings and Settings
-  getBirthday({birthday}){
-    return dateformat(birthday, "dd/mm/yyyy");
+  getBirthday(birthday){
+    return dateformat(birthday, "yyyy-mm-dd");
   }
 
   //Relacoes
   academic(){
     return this.hasOne('App/Models/AcademicDatum');
   }
-
 
   company () {
     return this.belongsToMany('App/Models/CompanyDatum').pivotTable('companies_users');
