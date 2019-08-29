@@ -29,8 +29,8 @@ class User extends Model {
   }
   
   //Gettings and Settings
-  getBirthday({birthday}){
-    return dateformat(birthday, "dd/mm/yyyy");
+  getBirthday(birthday){
+    return dateformat(birthday, "yyyy-mm-dd");
   }
 
   //Relacoes

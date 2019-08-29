@@ -4,6 +4,9 @@
 /** @typedef {import('@adonisjs/framework/src/Response')} Response */
 /** @typedef {import('@adonisjs/framework/src/View')} View */
 
+const User        = use('App/Models/User');
+const ProfStudent = use('App/Models/ProfessorsStudent');
+
 /**
  * Resourceful controller for interacting with professorsstudents
  */
@@ -18,18 +21,23 @@ class ProfessorsStudentController {
    * @param {View} ctx.view
    */
   async index ({ request, response, view }) {
+
   }
 
-  /**
-   * Render a form to be used for creating a new professorsstudent.
-   * GET professorsstudents/create
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   * @param {View} ctx.view
-   */
-  async create ({ request, response, view }) {
+  async show({request, response, auth}){
+    const {studant_id=null, professor_id=null} = request.all();
+    if (professor_id == null) {
+      const studant = await ProfStudent.findBy('studant_id', studant_id);
+      if (studant == null) {
+        return response.status(200).json({messaage:"Nenhum vínculo encontrado", error:true});
+      }
+
+      const professor_id = JSON.parse(JSON.stringify(studant)).professor_id;
+      const professor = await User.findBy('id', professor_id);
+      return response.status(200).json({...JSON.parse(JSON.stringify(professor)), error:false});
+      console.log(professor_id);
+    }
+    return 0;
   }
 
   /**
@@ -43,29 +51,6 @@ class ProfessorsStudentController {
   async store ({ request, response }) {
   }
 
-  /**
-   * Display a single professorsstudent.
-   * GET professorsstudents/:id
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   * @param {View} ctx.view
-   */
-  async show ({ params, request, response, view }) {
-  }
-
-  /**
-   * Render a form to update an existing professorsstudent.
-   * GET professorsstudents/:id/edit
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   * @param {View} ctx.view
-   */
-  async edit ({ params, request, response, view }) {
-  }
 
   /**
    * Update professorsstudent details.

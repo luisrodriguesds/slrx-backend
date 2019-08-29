@@ -72,7 +72,7 @@ class UserController {
 	  await auth.check()
 	  const token = auth.getAuthHeader()
       return await auth.revokeTokens([token]);
-  }
+  	}
 
 	async create({request, response}){
 		//get data
@@ -110,7 +110,7 @@ class UserController {
 	    		rules = {
 	    			ies:'required',
 	    			department:'required',
-	    			title:'in:Graduando,Graduado,Especializando,Especialista,Mestrando,Mestre,Doutorando,Doutor',
+	    			title:'required|in:Graduando,Graduado,Especializando,Especialista,Mestrando,Mestre,Doutorando,Doutor',
 	    			laboratory:'required',
 	    			research:'required',
 	    			description:'required'
@@ -169,7 +169,7 @@ class UserController {
 	    		rules = {
 	    			ies:'required',
 	    			department:'required',
-	    			title:'in:Graduando,Graduado,Especializando,Especialista,Mestrando,Mestre,Doutorando,Doutor',
+	    			title:'required|in:Graduando,Graduado,Especializando,Especialista,Mestrando,Mestre,Doutorando,Doutor',
 	    			laboratory:'required',
 	    			research:'required',
 	    			description:'required'
@@ -390,6 +390,129 @@ class UserController {
 	    }
 	}
 
+	async update({request, response, auth}){
+		//get data
+		let academy;
+		const data = request.only(['name','email','birthday','sex','other_email','state','city','phone1', 'phone2'])
+		const {other_email=null, phone2=null, user_id=null, access_level_slug=null} =request.all();
+		const access = ['aluno', 'professor', 'financeiro', 'tecnico', 'operador', 'autonomo', 'administrador'];
+		
+		//Middleware	
+		if (auth.user.id != user_id && auth.user.access_level_slug != 'administrador') {
+			return response.status(200).json({message:"Usuário não autorizado", error:true});			
+		}
+
+		//validation
+		//Rules
+		let rules = {
+			name:'required|min:3',
+			email: 'required|email',
+			access_level_slug:'in:aluno,professor,financeiro,tecnico,operador,autonomo,administrador',
+			birthday:'date',
+			sex:'required|min:1|max:2',
+			state:'required',
+			city:'required',
+			phone1:'required'
+		}
+
+		//Validation
+		let validation = await validate(data, rules);
+		if (validation.fails()) {
+			return response.status(200).json({...validation.messages()[0], error:true});
+		}
+
+		//Check access
+		let type = '';
+		if (access_level_slug == 'aluno' || access_level_slug == 'professor') {
+			type = 'academic';
+		}else if (access_level_slug == 'financeiro' || access_level_slug == 'tecnico') {
+			type = 'company';			
+		}else{
+			type = 'others';			
+		}
+
+		switch (type) {
+			case 'academic':
+				academy = request.only(['ies','department','title','laboratory','research','description']);
+				rules = {
+	    			ies:'required',
+	    			department:'required',
+	    			title:'required|in:Graduando,Graduado,Especializando,Especialista,Mestrando,Mestre,Doutorando,Doutor',
+	    			laboratory:'required',
+	    			research:'required',
+	    			description:'required'
+	    		}
+
+	    		validation = await validate(academy, rules);
+			    if (validation.fails()) {
+			    	return response.status(200).json({...validation.messages()[0], error:true});
+				}
+
+				await User.query().where('id', user_id).update({...data, other_email, phone2});
+				await Academy.query().where('user_id', user_id).update({...academy});
+				return response.status(200).json({message:"Dados alterados com sucesso!", error:false});				
+			break;
+			case 'company':
+				let company = request.only(['cnpj','fantasy_name','company_name','state_registration','company_email','company_phone','cep','street','neighborhood','number','company_city','company_state']);
+				let {type_company, company_id} = request.all();
+				rules = {
+	    			cnpj:'required|min:18|max:18',
+	    			fantasy_name:'required',
+	    			company_name:'required',
+	    			company_email:'required',
+	    			company_phone:'required',
+	    			cep:'required',
+	    			street:'required',
+	    			neighborhood:'required',
+	    			number:'required',
+	    			company_city:'required',
+					company_state:'required'
+	    		}
+	    		validation = await validate(company, rules);
+			    if (validation.fails()) {
+			    	return response.status(200).json({...validation.messages()[0], error:true});
+				}
+
+				if(type_company != 'tecnico' && type_company != 'financeiro'){
+					return response.status(200).json({message:"Tipo de usuário de empresa deve ser Técnico ou Financeiro", error:true});
+				}
+				
+				data.access_level = (type_company == 'tecnico') ? 'Técnico' : 'Financeiro';
+				data.access_level_slug = type_company;
+
+				await User.query().where('id', user_id).update({...data, other_email, phone2});
+				await Company.query().where('id', company_id).update({...company});
+				return response.status(200).json({message:"Dados alterados com sucesso!", error:false});				
+			break;
+			case 'others':
+				let other = request.only(['cep_address','street_address','neighborhood_address','number_address','city_address','state_address']);
+				let {address_id} = request.all();
+				rules = {
+	    			cep_address:'required',
+					street_address:'required',
+					neighborhood_address:'required',
+					number_address:'required',
+					city_address:'required',
+					state_address:'required'
+	    		}
+
+	    		validation = await validate(other, rules);
+	    		if (validation.fails()) {
+			    	return response.status(200).json({...validation.messages()[0], error:true});
+				}
+
+				await User.query().where('id', user_id).update({...data, other_email, phone2});
+				await Address.query().where('id', address_id).update({...other});
+				return response.status(200).json({message:"Dados alterados com sucesso!", error:false});				
+
+			break;
+			default:
+				return response.status(200).json({message:"Tipo de usuário não encontrado", error:true});
+			break;
+		}
+		return 0;
+	}
+
 	async confirm({request, response}){
 		//Confirm email after register
 		let {email} = request.all();
@@ -450,7 +573,7 @@ class UserController {
     	}
 
     	//Cria vinculo
-    	const confirm_bond = await ProfStudent.create({professor_id:prof.id, studant_id:studant.id});
+    	await ProfStudent.create({professor_id:prof.id, studant_id:studant.id});
 
     	//Atualizar campo confirm
     	await User.query().where('id', studant.id).update({confirm:1});

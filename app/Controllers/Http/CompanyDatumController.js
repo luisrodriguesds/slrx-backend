@@ -23,7 +23,7 @@ class CompanyDatumController {
   async index ({ request, response, view }) {
   }
 
-  async for_cnpj ({ request, response, params }) {
+  async by_cnpj({ request, response, params }) {
     const {cnpj} = request.all();
     const company = await Company.findBy('cnpj', cnpj);
     return company;
