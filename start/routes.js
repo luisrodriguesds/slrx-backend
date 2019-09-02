@@ -32,11 +32,11 @@ Route.group(() => {
 	Route.get('/api/user/confirm-user', 'UserController.confirm_user');
 
 	Route.post('/api/user', 'UserController.create');
-	Route.put('/api/user', 'UserController.update').middleware(['auth']);;
+	Route.put('/api/user', 'UserController.update').middleware(['auth']);
 
   	Route.get('/api/user/request-newpass/:email', 'UserController.request_newpass');
   	Route.post('/api/user/set-newpass', 'UserController.set_newpass');
-  	Route.put('/api/user/change-pass/:id', 'UserController.change_pass').middleware(['auth']);
+  	Route.put('/api/user/change-pass', 'UserController.change_pass').middleware(['auth']);
 });
 
 Route.group(() => {

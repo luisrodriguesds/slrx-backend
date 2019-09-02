@@ -658,24 +658,27 @@ class UserController {
         return response.status(200).json({"message":"Sua senha foi alterada com sucesso!", error:false});
     }
 
-    async change_newpass({ request, params, response }) {
+    async change_pass({ request, auth, response }) {
+
         // get currently authenticated user
-        const user = await User.findBy('id', params.id);
-        
+        const user = await User.findBy('id', auth.user.id);
+		const userPass = JSON.parse(JSON.stringify(user)).password;
+		
+		const {current_password, password} = request.all();
         // verify if current password matches
         const verifyPassword = await Hash.verify(
-            request.input('password'),
-            user.password
+            current_password,
+            userPass
         )
-        
+
         // display appropriate message
         if (!verifyPassword) {
-            return response.status(200).json({"message": 'As senhas não correspondem, por favor tente novamente.', error:true});
+            return response.status(200).json({"message": 'Senha atual invalida', error:true});
         }
     
         // hash and save new password
-        user.password = request.input('newPassword')
-        await user.save()
+        user.password = password;
+        await user.save();
     
         return response.status(200).json({"message":"Senha alterada com suecsso!", error:false});
     }
