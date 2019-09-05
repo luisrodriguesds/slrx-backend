@@ -19,7 +19,7 @@ class AcademicDataSchema extends Schema {
       table.string('title', 254).notNullable()
       table.string('laboratory', 254).notNullable()
       table.string('research', 254).notNullable()
-      table.string('description', 254)
+      table.text('description')
       table.integer('status', 11).notNullable().defaultTo(1)
 
       table.timestamps()

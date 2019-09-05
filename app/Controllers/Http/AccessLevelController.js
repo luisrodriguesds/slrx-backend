@@ -4,16 +4,13 @@
 /** @typedef {import('@adonisjs/framework/src/Response')} Response */
 /** @typedef {import('@adonisjs/framework/src/View')} View */
 
-const Company 		= use('App/Models/CompanyDatum');
-
-
 /**
- * Resourceful controller for interacting with companydata
+ * Resourceful controller for interacting with accesslevels
  */
-class CompanyDatumController {
+class AccessLevelController {
   /**
-   * Show a list of all companydata.
-   * GET companydata
+   * Show a list of all accesslevels.
+   * GET accesslevels
    *
    * @param {object} ctx
    * @param {Request} ctx.request
@@ -23,15 +20,9 @@ class CompanyDatumController {
   async index ({ request, response, view }) {
   }
 
-  async by_cnpj({ request, response, params }) {
-    const {cnpj} = request.all();
-    const company = await Company.findBy('cnpj', cnpj);
-    return company;
-  }
-
   /**
-   * Render a form to be used for creating a new companydatum.
-   * GET companydata/create
+   * Render a form to be used for creating a new accesslevel.
+   * GET accesslevels/create
    *
    * @param {object} ctx
    * @param {Request} ctx.request
@@ -42,8 +33,8 @@ class CompanyDatumController {
   }
 
   /**
-   * Create/save a new companydatum.
-   * POST companydata
+   * Create/save a new accesslevel.
+   * POST accesslevels
    *
    * @param {object} ctx
    * @param {Request} ctx.request
@@ -53,8 +44,8 @@ class CompanyDatumController {
   }
 
   /**
-   * Display a single companydatum.
-   * GET companydata/:id
+   * Display a single accesslevel.
+   * GET accesslevels/:id
    *
    * @param {object} ctx
    * @param {Request} ctx.request
@@ -65,8 +56,8 @@ class CompanyDatumController {
   }
 
   /**
-   * Render a form to update an existing companydatum.
-   * GET companydata/:id/edit
+   * Render a form to update an existing accesslevel.
+   * GET accesslevels/:id/edit
    *
    * @param {object} ctx
    * @param {Request} ctx.request
@@ -77,8 +68,8 @@ class CompanyDatumController {
   }
 
   /**
-   * Update companydatum details.
-   * PUT or PATCH companydata/:id
+   * Update accesslevel details.
+   * PUT or PATCH accesslevels/:id
    *
    * @param {object} ctx
    * @param {Request} ctx.request
@@ -88,8 +79,8 @@ class CompanyDatumController {
   }
 
   /**
-   * Delete a companydatum with id.
-   * DELETE companydata/:id
+   * Delete a accesslevel with id.
+   * DELETE accesslevels/:id
    *
    * @param {object} ctx
    * @param {Request} ctx.request
@@ -99,4 +90,4 @@ class CompanyDatumController {
   }
 }
 
-module.exports = CompanyDatumController
+module.exports = AccessLevelController

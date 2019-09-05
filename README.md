@@ -1,37 +1,27 @@
-#Sistema LRX - Backend
+# Sistema LRX - Backend
 Frontend do novo sistema que será gerenciar os sistema do LRX.
 
-# Adonis API application
+# Iniciando o projeto
 
-This is the boilerplate for creating an API server in AdonisJs, it comes pre-configured with.
-
-1. Bodyparser
-2. Authentication
-3. CORS
-4. Lucid ORM
-5. Migrations and seeds
-
-## Setup
-
-Use the adonis command to install the blueprint
-
+1. Instale as dependencias com `npm install`.
+2. Configure os dados do .env usando como referência o .env.example
+3. Configure o banco de dados
+4. Faça a migração com
 ```bash
-adonis new yardstick --api-only
-```
-
-or manually clone the repo and then run `npm install`.
-
-
-### Migrations
-
-Run the following command to run startup migrations.
-
-```js
 adonis migration:run
 ```
 
-### Make
+5. Popule o banco de dados com os dados iniciais usando
+```bash
+adonis seed --files="GlobalSeeder.js"
+```
 
+6. Execute o projeto com
+```bash
+adonis serve --dev
+```
+
+### Make
 Migration, Model e Controller
 
 ```bash
