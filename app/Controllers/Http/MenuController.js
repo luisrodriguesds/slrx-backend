@@ -4,6 +4,11 @@
 /** @typedef {import('@adonisjs/framework/src/Response')} Response */
 /** @typedef {import('@adonisjs/framework/src/View')} View */
 
+const Database    = use('Database');
+const Menu        = use('App/Models/Menu');
+const AccessLevel = use('App/Models/AccessLevel');
+const MenuAccess  = use('App/Models/MenuAccess');
+
 /**
  * Resourceful controller for interacting with menus
  */
@@ -20,17 +25,6 @@ class MenuController {
   async index ({ request, response, view }) {
   }
 
-  /**
-   * Render a form to be used for creating a new menu.
-   * GET menus/create
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   * @param {View} ctx.view
-   */
-  async create ({ request, response, view }) {
-  }
 
   /**
    * Create/save a new menu.
@@ -52,19 +46,56 @@ class MenuController {
    * @param {Response} ctx.response
    * @param {View} ctx.view
    */
-  async show ({ params, request, response, view }) {
-  }
+  async show ({ params, request, response }) {
+    const {access} = params;
 
-  /**
-   * Render a form to update an existing menu.
-   * GET menus/:id/edit
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   * @param {View} ctx.view
-   */
-  async edit ({ params, request, response, view }) {
+    //Check if exist
+    let typeUser = await AccessLevel.query().fetch();
+        typeUser = JSON.parse(JSON.stringify(typeUser));
+
+    const check = typeUser.filter(tp => tp.name_slug == access);
+    if (check.length == 0) {
+      return response.status(406).json({message:"Nível de acesso não encontrado.", error:true});
+    }
+
+    //Buscar os menus de cada tipo de usuário
+    //SELECT * FROM access_levels as a, menus as m, menu_accesses as ma WHERE a.name_slug = 'aluno' AND a.id = ma.access_id AND ma.menu_id = m.id;
+    let  menuRaw = await Database.table({a:'access_levels',
+                                         m:'menus', 
+                                         ma:'menu_accesses'})
+                                .select({menu_table_id:'m.id',
+                                         name:'m.name',
+                                         url:'m.url',
+                                         section:'m.section',
+                                         icon:'m.icon',
+                                         menu_status:'m.status',
+                                         
+                                         access_table_id:'a.id',
+                                         name_access:'a.name',
+                                         name_slug_access:'a.name_slug',
+                                         access_status:'a.status',
+
+                                         menu_id:'ma.menu_id',
+                                         access_id:'ma.access_id'
+                                         })
+                                .whereRaw('a.name_slug = ? AND a.id = ma.access_id AND ma.menu_id = m.id AND m.status = 1 AND a.status = 1', access);
+
+    if (menuRaw == null) {
+      return response.status(406).json({message:"Nível de acesso está desativado.", error:true});
+    }
+
+    //Isolate sections
+    let section = menuRaw.map(menu => menu.section);
+    let sections = section.filter((v,i) => section.indexOf(v) === i);
+    
+    //Mount Menu
+    let menu = sections.map((v,i) => {
+      let itens = menuRaw.filter(item => item.section == v);
+      return {section:v, itens};
+    });
+
+
+    return menu;
   }
 
   /**

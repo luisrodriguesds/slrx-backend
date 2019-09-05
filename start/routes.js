@@ -46,3 +46,7 @@ Route.group(() => {
 Route.group(() => {
 	Route.get('/api/professor-studant/show', 'ProfessorsStudentController.show').middleware(['auth']);
 });
+
+Route.group(() => {
+	Route.get('/api/menu/:access', 'MenuController.show').middleware(['auth']);
+});

@@ -20,7 +20,7 @@ class GlobalSeeder {
     const datenow = dateformat(Date.now(), 'yyyy-mm-dd HH:MM:ss');
     // MENUS
     await Database.table('menus').insert([
-    /*1*/{ name: 'Dashboard', url: '/dashboard', section:'', icon:'fas fa-fire', created_at:datenow, updated_at:datenow},
+    /*1*/{ name: 'Dashboard', url: '/dashboard', section:'Dashboard', icon:'fas fa-fire', created_at:datenow, updated_at:datenow},
     /*2*/{ name: 'Ver Arquivos', url: '/arquivos-uteis', section:'Arquivos Úteis', icon:'fas fa-file-alt', created_at:datenow, updated_at:datenow},
     /*3*/{ name: 'Enviar Arquivo', url: '/arquivos-uteis/enviar', section:'Arquivos Úteis', icon:'fas fa-file-alt', created_at:datenow, updated_at:datenow},
     /*4*/{ name: 'Todos os Equipamentos', url: '/equipamentos', section:'Equipamentos', icon:'fas fa-plug', created_at:datenow, updated_at:datenow},
