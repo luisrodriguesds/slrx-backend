@@ -48,5 +48,5 @@ Route.group(() => {
 });
 
 Route.group(() => {
-	Route.get('/api/menu/:access', 'MenuController.show').middleware(['auth']);
+	Route.get('/api/menu/show', 'MenuController.show').middleware(['auth']);
 });

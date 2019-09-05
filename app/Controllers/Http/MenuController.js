@@ -46,9 +46,14 @@ class MenuController {
    * @param {Response} ctx.response
    * @param {View} ctx.view
    */
-  async show ({ params, request, response }) {
-    const {access} = params;
-
+  async show ({ params, auth, response }) {
+    try {
+			await auth.check();
+		} catch (error) {
+			return response.status(406).json({message:"Usuário não está logado", error:true});
+    }
+    const access = auth.user.access_level_slug;
+    
     //Check if exist
     let typeUser = await AccessLevel.query().fetch();
         typeUser = JSON.parse(JSON.stringify(typeUser));
@@ -70,13 +75,9 @@ class MenuController {
                                          icon:'m.icon',
                                          menu_status:'m.status',
                                          
-                                         access_table_id:'a.id',
                                          name_access:'a.name',
                                          name_slug_access:'a.name_slug',
                                          access_status:'a.status',
-
-                                         menu_id:'ma.menu_id',
-                                         access_id:'ma.access_id'
                                          })
                                 .whereRaw('a.name_slug = ? AND a.id = ma.access_id AND ma.menu_id = m.id AND m.status = 1 AND a.status = 1', access);
 
@@ -89,9 +90,11 @@ class MenuController {
     let sections = section.filter((v,i) => section.indexOf(v) === i);
     
     //Mount Menu
-    let menu = sections.map((v,i) => {
+    let i=0;
+    let menu = sections.map((v) => {
       let itens = menuRaw.filter(item => item.section == v);
-      return {section:v, itens};
+      i++;
+      return {id:i, section:v, icon:itens[0].icon, itens};
     });
 
 
