@@ -449,7 +449,7 @@ class UserController {
 				}
 
 				await User.query().where('id', user_id).update({...data, other_email, phone2});
-				await Academy.query().where('user_id', user_id).update({...academy});
+				await Academy.query().where('user_id', user_id).update({...academy}); //Verifiar se existe esse dado
 				return response.status(200).json({message:"Dados alterados com sucesso!", error:false});				
 			break;
 			case 'company':
@@ -481,7 +481,7 @@ class UserController {
 				data.access_level_slug = type_company;
 
 				await User.query().where('id', user_id).update({...data, other_email, phone2});
-				await Company.query().where('id', company_id).update({...company});
+				await Company.query().where('id', company_id).update({...company}); //Verificar se existe esse dado na tabela
 				return response.status(200).json({message:"Dados alterados com sucesso!", error:false});				
 			break;
 			case 'others':

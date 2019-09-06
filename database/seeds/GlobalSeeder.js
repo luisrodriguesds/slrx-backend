@@ -18,6 +18,28 @@ const dateformat = use('dateformat');
 class GlobalSeeder {
   async run () {
     const datenow = dateformat(Date.now(), 'yyyy-mm-dd HH:MM:ss');
+
+    //User root
+    await Database.table('users').insert({
+      name:'root',
+      email:'root@root.com',
+      password: await Hash.make('10050621'),
+      access_level:'Administrador',
+      access_level_slug:'administrador',
+      cpf:'000.000.000-00',
+      birthday:datenow,
+      sex:1,
+      other_email:'',
+      state:'CE',
+      city:'Fortaleza',
+      phone1:'(85997646060)',
+      phone2:'',
+      confirm:1,
+      confirm_email:1,
+      created_at:datenow,
+      updated_at:datenow,
+    });
+
     // MENUS
     await Database.table('menus').insert([
     /*1*/{ name: 'Dashboard', url: '/dashboard', section:'Dashboard', icon:'fas fa-fire', status:0, created_at:datenow, updated_at:datenow},
