@@ -1,7 +1,7 @@
 # Sistema LRX - Backend
 Frontend do novo sistema que será gerenciar os sistema do LRX.
 
-# Iniciando o projeto
+## Iniciando o projeto
 
 1. Instale as dependencias com `npm install`.
 2. Configure os dados do .env usando como referência o .env.example

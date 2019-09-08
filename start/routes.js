@@ -39,14 +39,33 @@ Route.group(() => {
   	Route.put('/api/user/change-pass', 'UserController.change_pass').middleware(['auth']);
 });
 
+//Company
 Route.group(() => {
 	Route.get('/api/company/cnpj', 'CompanyDatumController.by_cnpj');
 });
 
+//Professor Studant
 Route.group(() => {
 	Route.get('/api/professor-studant/show', 'ProfessorsStudentController.show').middleware(['auth']);
 });
 
+//Menu
 Route.group(() => {
 	Route.get('/api/menu/show', 'MenuController.show').middleware(['auth']);
+});
+
+//Solicitations
+Route.group(() => {
+	Route.post('/api/solictation', 'SolicitationController.store').middleware(['auth']);
+	Route.get('/api/solictation/own', 'SolicitationController.own').middleware(['auth']);
+});
+
+//Gaps
+Route.group(() => {
+	Route.get('/api/gap', 'GapController.index').middleware(['auth']);
+});
+
+//Equipments
+Route.group(() => {
+	Route.get('/api/equipment', 'EquipmentController.index').middleware(['auth']);
 });

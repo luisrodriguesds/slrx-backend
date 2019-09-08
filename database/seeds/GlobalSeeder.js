@@ -177,21 +177,21 @@ class GlobalSeeder {
 
       //Valores das fendas
       await Database.table('gaps').insert([
-        {name:'3/4', status:1},
-        {name:'1/2', status:1},
-        {name:'1/8', status:1},
-        {name:'1/16', status:1},
-        {name:'1/4', status:1},
-        {name:'1/64', status:1},
-        {name:'1/32', status:1},
+        {name:'3/4', status:1, created_at:datenow, updated_at:datenow},
+        {name:'1/2', status:1, created_at:datenow, updated_at:datenow},
+        {name:'1/8', status:1, created_at:datenow, updated_at:datenow},
+        {name:'1/16', status:1, created_at:datenow, updated_at:datenow},
+        {name:'1/4', status:1, created_at:datenow, updated_at:datenow},
+        {name:'1/64', status:1, created_at:datenow, updated_at:datenow},
+        {name:'1/32', status:1, created_at:datenow, updated_at:datenow},
       ]);    
 
       //Equipamentos
       await Database.table('equipment').insert([
-        {name:'Rigaku DMAXB',type:'DRX',tube:'CU', status:0},
-        {name:"PANalytical X'Pert PRO",type:'DRX',tube:'CO', status:1},
-        {name:"Rigaku ZSX mini II",type:'DRX',tube:'CO', status:1},
-        {name:"PANalytical Axios mAX - IPDI",type:'DRX',tube:'CO', status:0, note:"Devido À  falta do detector de cintilação, somente os elementos do Fluor ao Cloro serão analisados."}
+        {name:'Rigaku DMAXB',type:'DRX',tube:'CU', status:0, created_at:datenow, updated_at:datenow},
+        {name:"PANalytical X'Pert PRO",type:'DRX',tube:'CO', status:1, created_at:datenow, updated_at:datenow},
+        {name:"Rigaku ZSX mini II",type:'DRX',tube:'CO', status:1, created_at:datenow, updated_at:datenow},
+        {name:"PANalytical Axios mAX - IPDI",type:'DRX',tube:'CO', status:0, note:"Devido À  falta do detector de cintilação, somente os elementos do Fluor ao Cloro serão analisados.", created_at:datenow, updated_at:datenow}
       ]);    
   }
 }

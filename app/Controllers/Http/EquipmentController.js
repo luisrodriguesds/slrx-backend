@@ -3,7 +3,7 @@
 /** @typedef {import('@adonisjs/framework/src/Request')} Request */
 /** @typedef {import('@adonisjs/framework/src/Response')} Response */
 /** @typedef {import('@adonisjs/framework/src/View')} View */
-
+const Equipment = use('App/Models/Equipment');
 /**
  * Resourceful controller for interacting with equipment
  */
@@ -18,6 +18,8 @@ class EquipmentController {
    * @param {View} ctx.view
    */
   async index ({ request, response, view }) {
+    const equipments = await Equipment.query().fetch();
+    return equipments;
   }
 
   /**

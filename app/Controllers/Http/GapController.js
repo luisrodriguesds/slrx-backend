@@ -4,6 +4,8 @@
 /** @typedef {import('@adonisjs/framework/src/Response')} Response */
 /** @typedef {import('@adonisjs/framework/src/View')} View */
 
+const Gap = use('App/Models/Gap');
+
 /**
  * Resourceful controller for interacting with gaps
  */
@@ -18,6 +20,8 @@ class GapController {
    * @param {View} ctx.view
    */
   async index ({ request, response, view }) {
+    const gaps = await Gap.query().fetch();
+    return gaps;
   }
 
   /**

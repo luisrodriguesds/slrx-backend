@@ -52,11 +52,11 @@ class SolicitationSchema extends Schema {
 
       table.string('composition', 254)
       table.string('shape', 254) // 1 - Pó  2 - Filmes 3 - Pastilhas 4 - Eletrodo 5 - Outro
-      table.integer('flammable', 1) // 0-não 1-sim
-      table.integer('radioactive', 1) // 0-não 1-sim
-      table.integer('toxic', 1) // 0-não 1-sim
-      table.integer('corrosive', 1) // 0-não 1-sim
-      table.integer('hygroscopic', 1) // 0-não 1-sim
+      table.string('flammable', 254) // 0-não 1-sim
+      table.string('radioactive', 254) // 0-não 1-sim
+      table.string('toxic', 254) // 0-não 1-sim
+      table.string('corrosive', 254) // 0-não 1-sim
+      table.string('hygroscopic', 254) // 0-não 1-sim
 
       table.text('note') // observações gerais
 
