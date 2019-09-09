@@ -18,7 +18,7 @@ class EquipmentController {
    * @param {View} ctx.view
    */
   async index ({ request, response, view }) {
-    const equipments = await Equipment.query().fetch();
+    const equipments = await Equipment.query().where('status', 1).fetch();
     return equipments;
   }
 

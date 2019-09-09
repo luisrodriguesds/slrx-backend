@@ -190,8 +190,8 @@ class GlobalSeeder {
       await Database.table('equipment').insert([
         {name:'Rigaku DMAXB',type:'DRX',tube:'CU', status:0, created_at:datenow, updated_at:datenow},
         {name:"PANalytical X'Pert PRO",type:'DRX',tube:'CO', status:1, created_at:datenow, updated_at:datenow},
-        {name:"Rigaku ZSX mini II",type:'DRX',tube:'CO', status:1, created_at:datenow, updated_at:datenow},
-        {name:"PANalytical Axios mAX - IPDI",type:'DRX',tube:'CO', status:0, note:"Devido À  falta do detector de cintilação, somente os elementos do Fluor ao Cloro serão analisados.", created_at:datenow, updated_at:datenow}
+        {name:"Rigaku ZSX mini II",type:'FRX',tube:'CO', status:1, created_at:datenow, updated_at:datenow},
+        {name:"PANalytical Axios mAX - IPDI",type:'FRX',tube:'CO', status:0, note:"Devido À  falta do detector de cintilação, somente os elementos do Fluor ao Cloro serão analisados.", created_at:datenow, updated_at:datenow}
       ]);    
   }
 }
