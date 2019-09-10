@@ -69,7 +69,7 @@ class SolicitationController {
       gap_id: 'required',
       method:'required|in:DRX,FRX',
       composition:'required',
-      shape:'required|in:Pó,Filmes,Pastilhas,Eletrodo,Outro',
+      shape:'required|in:Pó,Filme,Pastilha,Eletrodo,Outro',
       flammable:'required|in:Não,Sim',
       radioactive:'required|in:Não,Sim',
       toxic:'required|in:Não,Sim',
