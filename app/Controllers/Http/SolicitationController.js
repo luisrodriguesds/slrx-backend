@@ -80,7 +80,7 @@ class SolicitationController {
     //Validation
     let validation = await validate(data, rules);
     if (validation.fails()) {
-      return response.status(406).json({...validation.messages()[0], error:true});
+      return response.status(200).json({...validation.messages()[0], error:true});
     }
 
     if (data.method == 'DRX') {
@@ -95,7 +95,7 @@ class SolicitationController {
       //Validation
       let validation = await validate(settings, rules);
       if (validation.fails()) {
-        return response.status(406).json({...validation.messages()[0], error:true});
+        return response.status(200).json({...validation.messages()[0], error:true});
       }
 
     }else{
@@ -109,7 +109,7 @@ class SolicitationController {
       //Validation
       let validation = await validate(settings, rules);
       if (validation.fails()) {
-        return response.status(406).json({...validation.messages()[0], error:true});
+        return response.status(200).json({...validation.messages()[0], error:true});
       }
     }
 
@@ -128,11 +128,11 @@ class SolicitationController {
 
     //Quantidade de amostras que devem ser cadastradas
     let array_sample = [];
-    let start = await Solicitation.query().where('user_id', auth.user.id).fetch();
+    let start = await Solicitation.query().where({user_id:auth.user.id, method:data.method}).fetch();
         start = ((start == null) ? 1 : JSON.parse(JSON.stringify(start)).length+1);
  
     //Samples in array
-    if (quantity !== null) {
+    if (quantity !== 1) {
       for (var i = start; i < (parseInt(quantity)+start); i++) {
         let count = ((i < 10) ? '00'+(i) : ((i >= 10 && i < 100) ? '0'+(i) : ''+i));
         array_sample.push({name:identify+count, ...data, settings:JSON.stringify(settings), user_id:auth.user.id, created_at:now, updated_at:now});
