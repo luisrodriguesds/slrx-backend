@@ -187,9 +187,9 @@ class SolicitationController {
   async show ({ params, request, response }) {
   }
 
-  async own ({ params, request, auth,response }) {
+  async own ({ params, request, auth, response }) {
     const {page=1, perPage=10} = request.all();
-    const solicitations = await Solicitation.query().where({user_id:auth.user.id}).paginate(page, perPage);
+    const solicitations = await Solicitation.query().where({user_id:auth.user.id}).with('equipment').with('gap').paginate(page, perPage);
     return solicitations;
   }
 
