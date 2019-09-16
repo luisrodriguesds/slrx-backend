@@ -96,6 +96,8 @@ class SolicitationController {
       let validation = await validate(settings, rules);
       if (validation.fails()) {
         return response.status(200).json({...validation.messages()[0], error:true});
+      }else if (auth.user.drx_permission == 0) {
+        return response.status(200).json({message:"Você não tem permissão para cadastrar amostra de análise DRX", error:true});
       }
 
     }else{
@@ -110,6 +112,8 @@ class SolicitationController {
       let validation = await validate(settings, rules);
       if (validation.fails()) {
         return response.status(200).json({...validation.messages()[0], error:true});
+      }else if (auth.user.frx_permission == 0) {
+        return response.status(200).json({message:"Você não tem permissão para cadastrar amostra de análise FRX", error:true});
       }
     }
 
@@ -184,19 +188,39 @@ class SolicitationController {
    * @param {Response} ctx.response
    * @param {View} ctx.view
    */
-  async show ({ params, request, response }) {
+  async show ({ params, request, response, auth }) {
+    let res = [];
+    if (auth.user.access_level_slug == 'administrador' || auth.user.access_level_slug == 'operador') {
+      res = await Solicitation.query().where('name', params.name).with('equipment').with('gap').with('user').fetch();
+    }else{
+      res = await Solicitation.query().where({name:params.name, user_id:auth.user.id}).with('equipment').with('gap').with('user').fetch();
+    }
+    return res;
   }
 
-  async own ({ params, request, auth, response }) {
+  async all ({request, auth, response, query}) {
     const {page=1, perPage=10} = request.all();
-    const solicitations = await Solicitation.query().where({user_id:auth.user.id}).with('equipment').with('gap').paginate(page, perPage);
+    let solicitations = [];
+    if (auth.user.access_level_slug == 'administrador' || auth.user.access_level_slug == 'operador') {
+      solicitations = await Solicitation.query().with('equipment').paginate(page, perPage);
+    }else{
+      solicitations = await Solicitation.query().where({user_id:auth.user.id}).with('equipment').paginate(page, perPage);
+    }
     return solicitations;
   }
 
-  async filter ({ params, request, response }) {
+  async filter ({ request, response, auth }) {
+    const {filter=null, page=1, perPage=10} = request.all();
+    let res = [];
+    if (auth.user.access_level_slug == 'administrador' || auth.user.access_level_slug == 'operador') {
+      res = await Solicitation.query().where('name', 'like', `%${filter}%`).with('equipment').paginate(page, perPage);
+    }else{
+      res = await Solicitation.query().where('name', 'like', `%${filter}%`).andWhere({user_id:auth.user.id}).with('equipment').paginate(page, perPage);
+    }
+    return res;
   }
 
-  /**
+  /*
    * Update solicitation details.
    * PUT or PATCH solicitations/:id
    *

@@ -57,7 +57,9 @@ Route.group(() => {
 //Solicitations
 Route.group(() => {
 	Route.post('/api/solictation', 'SolicitationController.store').middleware(['auth']);
-	Route.get('/api/solictation/own', 'SolicitationController.own').middleware(['auth']);
+	Route.get('/api/solictation/all', 'SolicitationController.all').middleware(['auth']);
+	Route.get('/api/solictation/filter', 'SolicitationController.filter').middleware(['auth']);
+	Route.get('/api/solictation/show/:name', 'SolicitationController.show').middleware(['auth']);
 });
 
 //Gaps
