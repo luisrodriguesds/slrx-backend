@@ -229,9 +229,74 @@ class SolicitationController {
    * @param {Request} ctx.request
    * @param {Response} ctx.response
    */
-  async update ({ params, request, response }) {
-    
-    return request.all();
+  async update ({ params, request, response, auth }) {
+    //DRX - {"tecnica":"drx","dois_theta_inicial":10,"dois_theta_final":100,"delta_dois_theta":0.013}
+    //FRX - {"tecnica":"frx","resultado":"oxidos||elementos","medida":"semi-quantitativa"}
+    const data = request.only(['equipment_id', 'gap_id', 'method', 'composition', 'shape', 'flammable', 'radioactive', 'toxic', 'corrosive', 'hygroscopic', 'note']);
+    let {settings, id, user_id} = request.all();
+    //Validation
+    //Rules
+    let rules = {
+      equipment_id: 'required',
+      gap_id: 'required',
+      method:'required|in:DRX,FRX',
+      composition:'required',
+      shape:'required|in:Pó,Filme,Pastilha,Eletrodo,Outro',
+      flammable:'required|in:Não,Sim',
+      radioactive:'required|in:Não,Sim',
+      toxic:'required|in:Não,Sim',
+      corrosive:'required|in:Não,Sim',
+      hygroscopic:'required|in:Não,Sim',
+    }
+
+    //Validation
+    let validation = await validate(data, rules);
+    if (validation.fails()) {
+      return response.status(200).json({...validation.messages()[0], error:true});
+    }
+
+    if (data.method == 'DRX') {
+      //Rules
+      let rules = {
+        tecnica: 'required|in:DRX',
+        dois_theta_inicial: 'required',
+        dois_theta_final:'required',
+        delta_dois_theta:'required'
+      }
+
+      //Validation
+      let validation = await validate(settings, rules);
+      if (validation.fails()) {
+        return response.status(200).json({...validation.messages()[0], error:true});
+      }
+
+    }else{
+      //Rules
+      let rules = {
+        tecnica: 'required|in:FRX',
+        resultado: 'required|in:oxidos,elementos',
+        medida:'required|in:semi-quantitativa'
+      }
+
+      //Validation
+      let validation = await validate(settings, rules);
+      if (validation.fails()) {
+        return response.status(200).json({...validation.messages()[0], error:true});
+      }
+    }
+
+    //Whos editor
+    if (auth.user.access_level_slug == 'administrador' || auth.user.access_level_slug == 'operador') {
+      await Solicitation.query().where('id', id).update(data);
+    }else if (auth.user.id == user_id) {
+      await Solicitation.query().where('id', id).update(data);
+    }else if (auth.user.access_level_slug == 'professor') {
+      //Se for aluno desse professor
+      await Solicitation.query().where('id', id).update(data);
+    }else{
+      return response.status(406).json({message:"Usuário não tem permissão para realizar estas alterações", error:true});
+    }
+    return response.status(200).json({message:"Amostra alterada com successo!", error:false});
   }
 
   /**

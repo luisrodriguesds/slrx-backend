@@ -60,7 +60,7 @@ Route.group(() => {
 	Route.get('/api/solictation/all', 'SolicitationController.all').middleware(['auth']);
 	Route.get('/api/solictation/filter', 'SolicitationController.filter').middleware(['auth']);
 	Route.get('/api/solictation/show/:name', 'SolicitationController.show').middleware(['auth']);
-	Route.get('/api/solictation/update', 'SolicitationController.update').middleware(['auth']);
+	Route.put('/api/solictation/update', 'SolicitationController.update').middleware(['auth']);
 	Route.delete('/api/solictation/destroy/:name', 'SolicitationController.destroy').middleware(['auth']);
 	Route.delete('/api/solictation/destroy-all', 'SolicitationController.destroy_all').middleware(['auth']);
 });
