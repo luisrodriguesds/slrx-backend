@@ -199,7 +199,7 @@ class SolicitationController {
     return res;
   }
 
-  async all ({request, auth, response, query}) {
+  async all ({request, auth}) {
     const {page=1, perPage=10} = request.all();
     let solicitations = [];
     if (auth.user.access_level_slug == 'administrador' || auth.user.access_level_slug == 'operador') {
@@ -230,6 +230,8 @@ class SolicitationController {
    * @param {Response} ctx.response
    */
   async update ({ params, request, response }) {
+    
+    return request.all();
   }
 
   /**
@@ -255,16 +257,47 @@ class SolicitationController {
       await Solicitation.query().where('name', name).update({status:-1});
       solicitation.status = -1;
     }else if (auth.user.access_level_slug == 'professor') {
+      //Verificar se a amostra é de um dos seus alunos para cancelar
       // let user = await User.query().where('id', auth.user.id).with('').fetch();
+      await Solicitation.query().where('id', id).update({status:-1});
+      solicitation.status = -1;
     }
 
-    return response.status(200).json({message:"Amostra Deletada com successo!", error:false, solicitation});
+    return response.status(200).json({message:"Amostra canceladas com successo!", error:false, solicitation});
     
   }
 
-  async destroy_all ({ params, request, response, auth }) {
-    console.log(request.all());
-    return 0;
+  async destroy_all ({request, response, auth }) {
+    const {array} = request.all();
+    async function getSol(){
+      const res = array.map(async id => {
+        try {
+          let solicitation = await Solicitation.findBy('id', id);
+          if (solicitation != null) {
+            solicitation = JSON.parse(JSON.stringify(solicitation));
+            if (auth.user.access_level_slug == 'administrador' || auth.user.access_level_slug == 'operador') {
+              await Solicitation.query().where('id', id).update({status:-2});
+              solicitation.status = -2;
+            }else if (auth.user.id == solicitation.user_id) {
+              await Solicitation.query().where('id', id).update({status:-1});
+              solicitation.status = -1;
+            }else if (auth.user.access_level_slug == 'professor') {
+              //Verificar se a amostra é de um dos seus alunos para cancelar
+              // let user = await User.query().where('id', auth.user.id).with('').fetch();
+              await Solicitation.query().where('id', id).update({status:-1});
+              solicitation.status = -1;
+            }
+            return solicitation;
+          }
+        } catch (error) {
+  
+        }
+      });
+      const sol = await Promise.all(res);
+      return sol;
+    }
+    const getSolic = await getSol();
+    return response.status(200).json({message:"Amostras canceladas com successo!", error:false, solicitations:getSolic});
   }
 
 }
