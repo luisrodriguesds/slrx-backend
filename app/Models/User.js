@@ -28,9 +28,21 @@ class User extends Model {
   //   return ['password']
   // }
   
+  static get computed () {
+    return ['permission', 'super_permission']
+  }
+
   //Gettings and Settings
   getBirthday(birthday){
     return dateformat(birthday, "yyyy-mm-dd");
+  }
+
+  getPermission({access_level_slug}){
+    return ((access_level_slug == 'administrador') || (access_level_slug == 'operador')) ? true : false;
+  }
+
+  getSuperPermission({access_level_slug}){
+    return ((access_level_slug == 'administrador')) ? true : false;
   }
 
   //Relacoes

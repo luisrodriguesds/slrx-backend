@@ -1,5 +1,6 @@
 'use strict'
 const Solicitation  = use('App/Models/Solicitation');
+const User          = use('App/Models/User');
 const Database      = use('Database');
 const dateformat    = use('dateformat');
 const { validate }  = use('Validator');
@@ -202,9 +203,9 @@ class SolicitationController {
     const {page=1, perPage=10} = request.all();
     let solicitations = [];
     if (auth.user.access_level_slug == 'administrador' || auth.user.access_level_slug == 'operador') {
-      solicitations = await Solicitation.query().with('equipment').paginate(page, perPage);
+      solicitations = await Solicitation.query().with('equipment').orderBy('created_at', 'desc').limit(50).paginate(page, perPage);
     }else{
-      solicitations = await Solicitation.query().where({user_id:auth.user.id}).with('equipment').paginate(page, perPage);
+      solicitations = await Solicitation.query().where({user_id:auth.user.id}).with('equipment').orderBy('created_at', 'desc').limit(50).paginate(page, perPage);
     }
     return solicitations;
   }
@@ -213,9 +214,9 @@ class SolicitationController {
     const {filter=null, page=1, perPage=10} = request.all();
     let res = [];
     if (auth.user.access_level_slug == 'administrador' || auth.user.access_level_slug == 'operador') {
-      res = await Solicitation.query().where('name', 'like', `%${filter}%`).with('equipment').paginate(page, perPage);
+      res = await Solicitation.query().where('name', 'like', `%${filter}%`).with('equipment').orderBy('created_at', 'desc').limit(50).paginate(page, perPage);
     }else{
-      res = await Solicitation.query().where('name', 'like', `%${filter}%`).andWhere({user_id:auth.user.id}).with('equipment').paginate(page, perPage);
+      res = await Solicitation.query().where('name', 'like', `%${filter}%`).andWhere({user_id:auth.user.id}).with('equipment').orderBy('created_at', 'desc').limit(50).paginate(page, perPage);
     }
     return res;
   }
@@ -239,8 +240,33 @@ class SolicitationController {
    * @param {Request} ctx.request
    * @param {Response} ctx.response
    */
-  async destroy ({ params, request, response }) {
+  async destroy ({ params, request, response, auth }) {
+    const {name} = params;
+    let solicitation = await Solicitation.findBy('name', name);
+    if (solicitation == null) {
+      return response.status(200).json({message:"Solicitação não encontrada.", error:true});
+    }
+    solicitation = JSON.parse(JSON.stringify(solicitation));
+   
+    if (auth.user.access_level_slug == 'administrador' || auth.user.access_level_slug == 'operador') {
+      await Solicitation.query().where('name', name).update({status:-2});
+      solicitation.status = -2;
+    }else if (auth.user.id == solicitation.user_id) {
+      await Solicitation.query().where('name', name).update({status:-1});
+      solicitation.status = -1;
+    }else if (auth.user.access_level_slug == 'professor') {
+      // let user = await User.query().where('id', auth.user.id).with('').fetch();
+    }
+
+    return response.status(200).json({message:"Amostra Deletada com successo!", error:false, solicitation});
+    
   }
+
+  async destroy_all ({ params, request, response, auth }) {
+    console.log(request.all());
+    return 0;
+  }
+
 }
 
 module.exports = SolicitationController
