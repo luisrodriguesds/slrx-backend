@@ -210,7 +210,9 @@ class SolicitationController {
     //DRX - {"tecnica":"drx","dois_theta_inicial":10,"dois_theta_final":100,"delta_dois_theta":0.013}
     //FRX - {"tecnica":"frx","resultado":"oxidos||elementos","medida":"semi-quantitativa"}
     const data = request.only(['equipment_id', 'gap_id', 'method', 'composition', 'shape', 'flammable', 'radioactive', 'toxic', 'corrosive', 'hygroscopic', 'note']);
+    const message_success = "Amostra alterada com successo!", message_faul = "Usuário não tem permissão para realizar estas alterações!";
     let {settings, id, user_id} = request.all();
+    
     //Validation
     //Rules
     let rules = {
@@ -266,10 +268,26 @@ class SolicitationController {
       case 'administrador':
       case 'operador':
           await Solicitation.query().where('id', id).update(data);
+          return response.status(200).json({message, error:false});
       break;
       case 'professor':
-        //Fazer as críticas para update
-        await Solicitation.query().where('id', id).update(data);        
+          //Fazer as críticas para update
+          if (auth.user.id == user_id) {
+              await Solicitation.query().where('id', id).update(data);
+              return response.status(200).json({message:message_success, error:false});
+          }
+
+          let hasStudant = await ProfStudent.query().where({professor_id:auth.user.id, studant_id:user_id}).fetch();
+          if (hasStudant.length == 0) {
+              await Solicitation.query().where('id', id).update(data);  
+              return response.status(406).json({message:message_faul, error:true});      
+          }
+
+          hasStudant = JSON.parse(JSON.stringify(hasStudant));
+          if (hasStudant[0].studant_id == user_id) {
+              await Solicitation.query().where('id', id).update(data);  
+              return response.status(200).json({message:message_success, error:false});
+          }
       break;
       case 'tecnico':
       case 'financeiro':
@@ -278,13 +296,14 @@ class SolicitationController {
       default:
           if (auth.user.id == user_id) {
             await Solicitation.query().where('id', id).update(data);
+            return response.status(200).json({message:message_success, error:false});
           }else{
-            return response.status(406).json({message:"Usuário não tem permissão para realizar estas alterações", error:true});      
+            return response.status(406).json({message:message_faul, error:true});      
           }
       break;
     }
     
-    return response.status(200).json({message:"Amostra alterada com successo!", error:false});
+    return response.status(200).json({message:message_success error:false});
   }
 
    
@@ -331,6 +350,7 @@ class SolicitationController {
       case 'tecnico':
       case 'financeiro':
           //do it
+          return res;
       break;
       default:
         res = await Solicitation.query().where({name:params.name, user_id:auth.user.id}).with('equipment').with('gap').with('user').fetch();
