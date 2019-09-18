@@ -524,7 +524,7 @@ class UserController {
 		return 0;
 	}
 
-	async confirm({request, response}){
+	async confirm({request, response, view}){
 		//Confirm email after register
 		let {email} = request.all();
 		let buff = new Buffer(email, 'base64');
@@ -535,7 +535,7 @@ class UserController {
     	return view.render('message', {message:"Email confirmado com sucesso", error:false});
 	}
 
-	async confirm_user({request, response}){
+	async confirm_user({request, response, view}){
 		let {email, confirm} = request.all();
 		let buff = new Buffer(email, 'base64');
     	email = buff.toString('ascii');

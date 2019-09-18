@@ -1,6 +1,7 @@
 'use strict'
 const Solicitation  = use('App/Models/Solicitation');
 const User          = use('App/Models/User');
+const ProfStudent 	= use('App/Models/ProfessorsStudent');
 const Database      = use('Database');
 const dateformat    = use('dateformat');
 const { validate }  = use('Validator');
@@ -8,6 +9,24 @@ const { validate }  = use('Validator');
 /** @typedef {import('@adonisjs/framework/src/Request')} Request */
 /** @typedef {import('@adonisjs/framework/src/Response')} Response */
 /** @typedef {import('@adonisjs/framework/src/View')} View */
+
+// Cara tipo de usuário tem uma tratamento própio de críticas, então se usa switch
+// switch (auth.user.access_level_slug) {
+//   case 'administrador':
+//   case 'operador':
+
+//   break;
+//   case 'professor':
+      
+//   break;
+//   case 'tecnico':
+//   case 'financeiro':
+//       //do it
+//   break;
+//   default:
+//   break;
+// }
+
 
 /**
  * Resourceful controller for interacting with solicitations
@@ -178,52 +197,7 @@ class SolicitationController {
     return response.status(200).json({message:"Amostras cadastradas com sucesso! "+message, error:false});
   }
 
-  
-
-  /**
-   * Display a single solicitation.
-   * GET solicitations/:id
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   * @param {View} ctx.view
-   */
-  async show ({ params, request, response, auth }) {
-    let res = [];
-    if (auth.user.access_level_slug == 'administrador' || auth.user.access_level_slug == 'operador') {
-      res = await Solicitation.query().where('name', params.name).with('equipment').with('gap').with('user').fetch();
-    }else{
-      res = await Solicitation.query().where({name:params.name, user_id:auth.user.id}).with('equipment').with('gap').with('user').fetch();
-    }
-    return res;
-  }
-
-  async all ({request, auth}) {
-    const {page=1, perPage=10} = request.all();
-    let solicitations = [];
-    if (auth.user.access_level_slug == 'administrador' || auth.user.access_level_slug == 'operador') {
-      solicitations = await Solicitation.query().with('equipment').orderBy('created_at', 'desc').limit(50).paginate(page, perPage);
-    }else{
-      //Professor deve aparecer as solicitações dele e de seus alunos
-      //Empresa - Técnico e Financeiro deve aparecerer as amostras de ambos, unidos pela empresa
-      //SELECT u.id, u.name, u.access_level, ps.professor_id, ps.studant_id, s.* FROM users as u, professors_students as ps, solicitations as s WHERE ps.professor_id = '2' AND studant_id = u.id AND s.user_id IN (u.id, '2');
-      solicitations = await Solicitation.query().where({user_id:auth.user.id}).with('equipment').orderBy('created_at', 'desc').limit(50).paginate(page, perPage);
-    }
-    return solicitations;
-  }
-
-  async filter ({ request, response, auth }) {
-    const {filter=null, page=1, perPage=10} = request.all();
-    let res = [];
-    if (auth.user.access_level_slug == 'administrador' || auth.user.access_level_slug == 'operador') {
-      res = await Solicitation.query().where('name', 'like', `%${filter}%`).with('equipment').orderBy('created_at', 'desc').limit(50).paginate(page, perPage);
-    }else{
-      res = await Solicitation.query().where('name', 'like', `%${filter}%`).andWhere({user_id:auth.user.id}).with('equipment').orderBy('created_at', 'desc').limit(50).paginate(page, perPage);
-    }
-    return res;
-  }
-
+ 
   /*
    * Update solicitation details.
    * PUT or PATCH solicitations/:id
@@ -232,7 +206,7 @@ class SolicitationController {
    * @param {Request} ctx.request
    * @param {Response} ctx.response
    */
-  async update ({ params, request, response, auth }) {
+  async update ({request, response, auth }) {
     //DRX - {"tecnica":"drx","dois_theta_inicial":10,"dois_theta_final":100,"delta_dois_theta":0.013}
     //FRX - {"tecnica":"frx","resultado":"oxidos||elementos","medida":"semi-quantitativa"}
     const data = request.only(['equipment_id', 'gap_id', 'method', 'composition', 'shape', 'flammable', 'radioactive', 'toxic', 'corrosive', 'hygroscopic', 'note']);
@@ -287,20 +261,218 @@ class SolicitationController {
         return response.status(200).json({...validation.messages()[0], error:true});
       }
     }
-
-    //Whos editor
-    if (auth.user.access_level_slug == 'administrador' || auth.user.access_level_slug == 'operador') {
-      await Solicitation.query().where('id', id).update(data);
-    }else if (auth.user.id == user_id) {
-      await Solicitation.query().where('id', id).update(data);
-    }else if (auth.user.access_level_slug == 'professor') {
-      //Se for aluno desse professor
-      await Solicitation.query().where('id', id).update(data);
-    }else{
-      return response.status(406).json({message:"Usuário não tem permissão para realizar estas alterações", error:true});
+  
+    switch (auth.user.access_level_slug) {
+      case 'administrador':
+      case 'operador':
+          await Solicitation.query().where('id', id).update(data);
+      break;
+      case 'professor':
+        //Fazer as críticas para update
+        await Solicitation.query().where('id', id).update(data);        
+      break;
+      case 'tecnico':
+      case 'financeiro':
+          //do it
+      break;
+      default:
+          if (auth.user.id == user_id) {
+            await Solicitation.query().where('id', id).update(data);
+          }else{
+            return response.status(406).json({message:"Usuário não tem permissão para realizar estas alterações", error:true});      
+          }
+      break;
     }
+    
     return response.status(200).json({message:"Amostra alterada com successo!", error:false});
   }
+
+   
+
+  /**
+   * Display a single solicitation.
+   * GET solicitations/:id
+   *
+   * @param {object} ctx
+   * @param {Request} ctx.request
+   * @param {Response} ctx.response
+   * @param {View} ctx.view
+   */
+  async show ({ params, response, auth }) {
+    let res = [];
+    res = await Solicitation.query().where({name:params.name}).with('equipment').with('gap').with('user').fetch();      
+    res = JSON.parse(JSON.stringify(res));
+    if (res.length == 0) {
+      return response.status(406).json([]);
+    }
+
+    switch (auth.user.access_level_slug) {
+      case 'administrador':
+      case 'operador':
+          return res;
+      break;
+      case 'professor':
+          if (res[0].user_id == auth.user.id) {
+            return res;
+          }
+    
+          let hasStudant = await ProfStudent.query().where({professor_id:auth.user.id, studant_id:res[0].user_id}).fetch();
+          if (hasStudant.length == 0) {
+              return response.status(406).json([]);
+          }
+    
+          hasStudant = JSON.parse(JSON.stringify(hasStudant));
+          // console.log(hasStudant);
+          if (hasStudant[0].studant_id != res[0].user_id) {
+            return response.status(406).json([]);        
+          }
+          return res;
+      break;
+      case 'tecnico':
+      case 'financeiro':
+          //do it
+      break;
+      default:
+        res = await Solicitation.query().where({name:params.name, user_id:auth.user.id}).with('equipment').with('gap').with('user').fetch();
+        return res;
+      break;
+    }
+  }
+
+  async all ({request, auth}) {
+    const {page=1, perPage=10} = request.all();
+    let solicitations = [];
+    switch (auth.user.access_level_slug) {
+        case 'administrador':
+        case 'operador':
+          solicitations = await Solicitation.query().with('equipment').orderByRaw('created_at DESC, name ASC').limit(100).paginate(page, perPage);
+        break;
+        case 'professor':
+            //Professor deve aparecer as solicitações dele e de seus alunos
+            //Este professor tém algum aluno cadastrado?
+            //Sim
+            const hasStudant = await ProfStudent.findBy({professor_id:auth.user.id});
+            if (hasStudant == null) {
+              solicitations = await Solicitation.query().where({user_id:auth.user.id}).with('equipment').orderByRaw('created_at DESC, name ASC').limit(50).paginate(page, perPage);
+            }else{
+              //Não
+              //Este aluno tem amostra cadastradas?
+              //Sim
+              //SELECT u.id, u.name, u.access_level, ps.professor_id, ps.studant_id, s.* FROM users as u, professors_students as ps, solicitations as s WHERE ps.professor_id = '2' AND studant_id = u.id AND s.user_id IN (u.id, '2');
+              solicitations = await Database.table({
+                u:'users',
+                ps:'professors_students',
+                s:'solicitations',
+                e:'equipment'
+              }).select({
+                user_id:'u.id',
+                id:'s.id',
+                user_id:'s.user_id',
+                equipment_id:'s.equipment_id',
+                equipment:'e.id',
+                equipment_name:'e.name',
+                gap_id:'s.gap_id',
+                name:'s.name',
+                method:'s.method',
+                settings:'s.settings',
+                status:'s.status',
+                composition:'s.composition',
+                shape:'s.shape',
+                flammable:'s.flammable',
+                radioactive:'s.radioactive',
+                toxic:'s.toxic',
+                corrosive:'s.corrosive',
+                hygroscopic:'s.hygroscopic',
+                note:'s.note',
+                received_date:'s.received_date',
+                solicitation_date:'s.solicitation_date',
+                conclusion_date:'s.conclusion_date',
+                analyze_time:'s.analyze_time',
+                created_at:'s.created_at',
+                updated_at:'s.updated_at',
+              }).whereRaw(`ps.professor_id = '${auth.user.id}' AND studant_id = u.id AND s.user_id IN (u.id, '${auth.user.id}') AND s.equipment_id = e.id`).orderByRaw('s.created_at DESC, s.name ASC').paginate(page, perPage);
+              for (let i = 0; i < solicitations.data.length; i++) {
+                solicitations.data[i].equipment = {name:solicitations.data[i].equipment_name};       
+              }
+            }
+        break;
+        case 'tecnico':
+        case 'financeiro':
+            //do it
+        break;
+        default:
+          solicitations = await Solicitation.query().where({user_id:auth.user.id}).with('equipment').orderByRaw('created_at DESC, name ASC').limit(50).paginate(page, perPage);
+        break;
+    }
+    
+    return solicitations;
+  }
+
+  async filter ({ request, auth }) {
+    const {filter=null, page=1, perPage=10} = request.all();
+    let res = [];
+
+    switch (auth.user.access_level_slug) {
+      case 'administrador':
+      case 'operador':
+          res = await Solicitation.query().where('name', 'like', `%${filter}%`).with('equipment').orderByRaw('created_at DESC, name ASC').limit(50).paginate(page, perPage);
+      break;
+      case 'professor':
+          const hasStudant = await ProfStudent.findBy({professor_id:auth.user.id});
+          if (hasStudant == null) {
+            res = await Solicitation.query().where('name', 'like', `%${filter}%`).andWhere({user_id:auth.user.id}).with('equipment').orderByRaw('created_at DESC, name ASC').limit(50).paginate(page, perPage);
+          }else{
+            //SELECT u.id, u.name, u.access_level, ps.professor_id, ps.studant_id, s.* FROM users as u, professors_students as ps, solicitations as s WHERE ps.professor_id = '2' AND studant_id = u.id AND s.user_id IN (u.id, '2');
+            res = await Database.table({
+              u:'users',
+              ps:'professors_students',
+              s:'solicitations',
+              e:'equipment'
+            }).select({
+              user_id:'u.id',
+              id:'s.id',
+              user_id:'s.user_id',
+              equipment_id:'s.equipment_id',
+              equipment:'e.id',
+              equipment_name:'e.name',
+              gap_id:'s.gap_id',
+              name:'s.name',
+              method:'s.method',
+              settings:'s.settings',
+              status:'s.status',
+              composition:'s.composition',
+              shape:'s.shape',
+              flammable:'s.flammable',
+              radioactive:'s.radioactive',
+              toxic:'s.toxic',
+              corrosive:'s.corrosive',
+              hygroscopic:'s.hygroscopic',
+              note:'s.note',
+              received_date:'s.received_date',
+              solicitation_date:'s.solicitation_date',
+              conclusion_date:'s.conclusion_date',
+              analyze_time:'s.analyze_time',
+              created_at:'s.created_at',
+              updated_at:'s.updated_at',
+            }).whereRaw(`ps.professor_id = '${auth.user.id}' AND studant_id = u.id AND s.user_id IN (u.id, '${auth.user.id}') AND s.equipment_id = e.id AND s.name LIKE '%${filter}%'`).orderByRaw('s.created_at DESC, s.name ASC').paginate(page, perPage);
+            for (let i = 0; i < res.data.length; i++) {
+              res.data[i].equipment = {name:res.data[i].equipment_name};        
+              res.data[i].settings = JSON.parse(res.data[i].settings); ;        
+            }
+          }
+      break;
+      case 'tecnico':
+      case 'financeiro':
+          //do it
+      break;
+      default:
+          res = await Solicitation.query().where('name', 'like', `%${filter}%`).andWhere({user_id:auth.user.id}).with('equipment').orderBy('created_at', 'desc').limit(50).paginate(page, perPage);
+      break;
+    }
+
+    return res;
+  }
+
 
   /**
    * Delete a solicitation with id.
@@ -310,31 +482,41 @@ class SolicitationController {
    * @param {Request} ctx.request
    * @param {Response} ctx.response
    */
-  async destroy ({ params, request, response, auth }) {
+  async destroy ({ params, response, auth }) {
     const {name} = params;
     let solicitation = await Solicitation.findBy('name', name);
     if (solicitation == null) {
       return response.status(200).json({message:"Solicitação não encontrada.", error:true});
     }
     solicitation = JSON.parse(JSON.stringify(solicitation));
-   
-    if (auth.user.access_level_slug == 'administrador' || auth.user.access_level_slug == 'operador') {
-      await Solicitation.query().where('name', name).update({status:-2});
-      solicitation.status = -2;
-    }else if (auth.user.id == solicitation.user_id) {
-      await Solicitation.query().where('name', name).update({status:-1});
-      solicitation.status = -1;
-    }else if (auth.user.access_level_slug == 'professor') {
-      //Verificar se a amostra é de um dos seus alunos para cancelar
-      // let user = await User.query().where('id', auth.user.id).with('').fetch();
-      await Solicitation.query().where('id', id).update({status:-1});
-      solicitation.status = -1;
+    
+    switch (auth.user.access_level_slug) {
+      case 'administrador':
+      case 'operador':
+          await Solicitation.query().where('name', name).update({status:-2});
+          solicitation.status = -2;
+      break;
+      case 'professor':
+          //Verificar se a amostra é de um dos seus alunos para cancelar
+          // let user = await User.query().where('id', auth.user.id).with('').fetch();
+          await Solicitation.query().where('id', id).update({status:-1});
+          solicitation.status = -1;
+      break;
+      case 'tecnico':
+      case 'financeiro':
+          //do it
+      break;
+      default:
+          if (auth.user.id == solicitation.user_id) {
+            await Solicitation.query().where('name', name).update({status:-1});
+            solicitation.status = -1;
+          }
+      break;
     }
 
     return response.status(200).json({message:"Amostra canceladas com successo!", error:false, solicitation});
-    
   }
-
+  
   async destroy_all ({request, response, auth }) {
     const {array} = request.all();
     async function getSol(){
@@ -343,29 +525,43 @@ class SolicitationController {
           let solicitation = await Solicitation.findBy('id', id);
           if (solicitation != null) {
             solicitation = JSON.parse(JSON.stringify(solicitation));
-            if (auth.user.access_level_slug == 'administrador' || auth.user.access_level_slug == 'operador') {
-              await Solicitation.query().where('id', id).update({status:-2});
-              solicitation.status = -2;
-            }else if (auth.user.id == solicitation.user_id) {
-              await Solicitation.query().where('id', id).update({status:-1});
-              solicitation.status = -1;
-            }else if (auth.user.access_level_slug == 'professor') {
-              //Verificar se a amostra é de um dos seus alunos para cancelar
-              // let user = await User.query().where('id', auth.user.id).with('').fetch();
-              await Solicitation.query().where('id', id).update({status:-1});
-              solicitation.status = -1;
+
+            switch (auth.user.access_level_slug) {
+              case 'administrador':
+              case 'operador':
+                  await Solicitation.query().where('id', id).update({status:-2});
+                  solicitation.status = -2;
+              break;
+              case 'professor':
+                //Fazer as críticas 
+                  await Solicitation.query().where('id', id).update({status:-1});
+                  solicitation.status = -1;
+              break;
+              case 'tecnico':
+              case 'financeiro':
+                //Fazer as críticas   
+
+              break;
+              default:
+                  if (auth.user.id == solicitation.user_id) {
+                    await Solicitation.query().where('id', id).update({status:-1});
+                    solicitation.status = -1;
+                  }
+              break;
             }
+
             return solicitation;
           }
         } catch (error) {
-  
+          //Mandar um alerta pra mim
         }
+
       });
       const sol = await Promise.all(res);
       return sol;
     }
     const getSolic = await getSol();
-    return response.status(200).json({message:"Amostras canceladas com successo!", error:false, solicitations:getSolic});
+    return response.status(200).json({message:"Amostras canceladas com successo!", error:false});
   }
 
 }

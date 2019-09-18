@@ -6,9 +6,9 @@ const dateformat = use('dateformat');
 
 class Solicitation extends Model {
 	//Gettings and Settings
-	 getCreatedAt(created_at){
-	   return dateformat(created_at, "dd/mm/yyyy HH:MM:ss");
-	 }
+	//  getCreatedAt(created_at){
+	//    return dateformat(created_at, "dd/mm/yyyy HH:MM:ss");
+	//  }
 
      getSettings(settings){
        return JSON.parse(settings);
