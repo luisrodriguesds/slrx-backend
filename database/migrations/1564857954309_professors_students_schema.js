@@ -22,6 +22,10 @@ class ProfessorsStudentsSchema extends Schema {
         .inTable('users')
         .onUpdate('CASCADE')
         .onDelete('CASCADE')
+
+      //0 -> Esperando aprovação do professor
+      //1 -> Ativo e vinculado ao professor
+      //2 -> Professor não aceitou sua solicitação de vínculo
       table.integer('status', 11).notNullable().defaultTo(1)
         
       table.timestamps()

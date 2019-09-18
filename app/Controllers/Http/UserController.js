@@ -121,11 +121,20 @@ class UserController {
 			    	return response.status(200).json({...validation.messages()[0], error:true});
 			    }
 			    
-			    //Check if the professor is registered
+			    //Check if the professor is registered and if he has more than 20 studant registed
 				let {email_leader} 	= request.all(); 
 				let email_prof		= await User.findBy({email:email_leader, access_level_slug:"professor", confirm:1});
 				if (email_prof == null) {
 			    	return response.status(200).json({message:"Esse professor/orientador não tem cadastro válido com o email informado. Por favor, digite um email de orientador de uma conta válida.", error:true});
+				}else{
+					email_prof = JSON.parse(JSON.stringify(email_prof));
+					let count_studant = await ProfStudent.query().where({professor_id:email_prof.id, status:1}).fetch();
+					count_studant = JSON.parse(JSON.stringify(count_studant));
+					
+					if (count_studant.length >= 20) {
+			    		return response.status(200).json({message:"Esse professor/orientador já excedeu o limite de 20 alunos ativos.", error:true});
+					}
+
 				}
 
 			    try{
@@ -133,6 +142,7 @@ class UserController {
 			    	//Create at database
 				    let {id} = await User.create({...data, other_email, phone2, access_level:"Aluno"});
 				    academyCreate = await Academy.create({...academy, user_id:id});
+				    let profStudent = await ProfStudent.create({professor_id:email_prof.id, studant_id:id, status:0});
 				    
 				     //send the emails
 				     //confirm register in email
@@ -155,13 +165,14 @@ class UserController {
 			              .from('<from-email>')
 			              .subject('SLRX - UFC | Confirmação de Vínculo')
 			        });
-				    //Return 
+
 				    return response.status(200).json({message:`Seu cadastro foi efetuado com sucesso! Um email de confirmação foi enviado para ${data.email}. Acesse seu email e finalize seu cadastro. <br> Além disso, foi enviado um email para ${email_leader}, seu orientador, solicitando que ele confirme seu vinculo para que possa cadastrar suas amostras no sistema.`, error:false});
 
 			    }catch(e){
 			    	console.log(e);
 			    	return response.status(200).json({message:"Ocorreu algum erro, tente novamente mais tarde", error:true});
 			    }
+
 	    	break;
 	    	case "professor":
 	    		//waiting for: ies,department,title,laboratory,research,description
@@ -520,8 +531,8 @@ class UserController {
     	email = buff.toString('ascii');
     	
     	await User.query().where('email', email).update({confirm_email:1});
-		
-		return response.status(200).json({message:"Email confirmado com sucesso", error:false});
+    	
+    	return view.render('message', {message:"Email confirmado com sucesso", error:false});
 	}
 
 	async confirm_user({request, response}){
@@ -537,7 +548,7 @@ class UserController {
 	              .from('<from-email>')
 	              .subject('SLRX - UFC | Liberação de Acesso')
 	        });
-	        return response.status(200).json({message:"Liberação efetuada com sucesso", error:false});
+    		return view.render('message', {message:"Liberação efetuada com sucesso", error:false});
     	}else{
     		await User.query().where('email', email).update({confirm:0});
     		await Mail.send('emails.accessDenied', {email}, (message) => {
@@ -546,12 +557,11 @@ class UserController {
 	              .from('<from-email>')
 	              .subject('SLRX - UFC | Liberação de Acesso')
 	        });
-	        return response.status(200).json({message:"Cadastro recusado", error:false});
-
+    		return view.render('message', {message:"Cadastro recusado", error:false});
     	}
 	}
 
-	async confirm_bond({request, response}){
+	async confirm_bond({request, response, view}){
 		let {email, email_leader} = request.all();
 		let buff1 	= new Buffer(email, 'base64');
 		let buff2 	= new Buffer(email_leader, 'base64');
@@ -567,13 +577,15 @@ class UserController {
     	}
 
     	//If already exist in pivotTable
-    	const prof_st = await ProfStudent.findBy({professor_id:prof.id, studant_id:studant.id});
-    	if (prof_st != null) {
-    		return response.status(200).json({message:"Aluno e Professor já vinculados", error:true});
+    	let prof_st = await ProfStudent.query().where({professor_id:prof.id, studant_id:studant.id}).fetch();
+    	prof_st = JSON.parse(JSON.stringify(prof_st))[0];
+
+    	if (prof_st.status == 1) {
+    		return view.render('message', {message:"Aluno e Professor já vinculados", error:true});
     	}
 
-    	//Cria vinculo
-    	await ProfStudent.create({professor_id:prof.id, studant_id:studant.id});
+    	//Atualizar vinculo
+    	await ProfStudent.query().where('id', prof_st.id).update({status:1});
 
     	//Atualizar campo confirm
     	await User.query().where('id', studant.id).update({confirm:1});
@@ -585,8 +597,7 @@ class UserController {
               .from('<from-email>')
               .subject('SLRX - UFC | Liberação de Acesso')
         });
-
-    	return response.status(200).json({message:"Vínculo efetuado com sucesso!", error:false});
+    	return view.render('message', {message:"Vínculo efetuado com sucesso!", error:false});
 	}
 
 	async request_newpass({params, response}){

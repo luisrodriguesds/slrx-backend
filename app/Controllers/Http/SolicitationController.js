@@ -70,7 +70,7 @@ class SolicitationController {
       gap_id: 'required',
       method:'required|in:DRX,FRX',
       composition:'required',
-      shape:'required|in:Pó,Filme,Pastilha,Eletrodo,Outro',
+      shape:'required|in:Pó,Filme,Pastilha,Eletródo,Outro',
       flammable:'required|in:Não,Sim',
       radioactive:'required|in:Não,Sim',
       toxic:'required|in:Não,Sim',
@@ -205,6 +205,9 @@ class SolicitationController {
     if (auth.user.access_level_slug == 'administrador' || auth.user.access_level_slug == 'operador') {
       solicitations = await Solicitation.query().with('equipment').orderBy('created_at', 'desc').limit(50).paginate(page, perPage);
     }else{
+      //Professor deve aparecer as solicitações dele e de seus alunos
+      //Empresa - Técnico e Financeiro deve aparecerer as amostras de ambos, unidos pela empresa
+      //SELECT u.id, u.name, u.access_level, ps.professor_id, ps.studant_id, s.* FROM users as u, professors_students as ps, solicitations as s WHERE ps.professor_id = '2' AND studant_id = u.id AND s.user_id IN (u.id, '2');
       solicitations = await Solicitation.query().where({user_id:auth.user.id}).with('equipment').orderBy('created_at', 'desc').limit(50).paginate(page, perPage);
     }
     return solicitations;
@@ -241,7 +244,7 @@ class SolicitationController {
       gap_id: 'required',
       method:'required|in:DRX,FRX',
       composition:'required',
-      shape:'required|in:Pó,Filme,Pastilha,Eletrodo,Outro',
+      shape:'required|in:Pó,Filme,Pastilha,Eletródo,Outro',
       flammable:'required|in:Não,Sim',
       radioactive:'required|in:Não,Sim',
       toxic:'required|in:Não,Sim',
