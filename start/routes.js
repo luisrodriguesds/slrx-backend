@@ -57,6 +57,8 @@ Route.group(() => {
 //Solicitations
 Route.group(() => {
 	Route.post('/api/solictation', 'SolicitationController.store').middleware(['auth']);
+	Route.post('/api/solictation/next-step-all', 'SolicitationController.next_step_all').middleware(['auth']);
+	Route.post('/api/solictation/next-step', 'SolicitationController.next_step').middleware(['auth']);
 	Route.get('/api/solictation/all', 'SolicitationController.all').middleware(['auth']);
 	Route.get('/api/solictation/filter', 'SolicitationController.filter').middleware(['auth']);
 	Route.get('/api/solictation/show/:name', 'SolicitationController.show').middleware(['auth']);

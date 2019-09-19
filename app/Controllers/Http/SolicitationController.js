@@ -413,7 +413,7 @@ class SolicitationController {
                 analyze_time:'s.analyze_time',
                 created_at:'s.created_at',
                 updated_at:'s.updated_at',
-              }).whereRaw(`ps.professor_id = '${auth.user.id}' AND studant_id = u.id AND s.user_id IN (u.id, '${auth.user.id}') AND s.equipment_id = e.id`).orderByRaw('s.created_at DESC, s.name ASC').paginate(page, perPage);
+              }).whereRaw(`ps.professor_id = '${auth.user.id}' AND ps.studant_id = u.id AND s.user_id IN (ps.studant_id, '${auth.user.id}') AND s.equipment_id = e.id`).orderByRaw('s.created_at DESC, s.name ASC').paginate(page, perPage);
               for (let i = 0; i < solicitations.data.length; i++) {
                 solicitations.data[i].equipment = {name:solicitations.data[i].equipment_name};       
               }
@@ -495,6 +495,74 @@ class SolicitationController {
     return res;
   }
 
+  async next_step ({ request, response, auth }) {
+    const {id} = request.all();
+    let check;
+    let solicitation = await Solicitation.findBy('id', id);
+    if (solicitation == null) {
+      return response.status(406).json({message:"Solicitação não encontrada", error:true});
+    }
+    solicitation = JSON.parse(JSON.stringify(solicitation));
+    
+    switch (auth.user.access_level_slug) {
+      case 'administrador':
+      case 'operador':
+        
+      break;
+      case 'professor':
+        //Professor pode autorizar até 4 amostras, dele e de seus alunos.
+        //A soma das amostras dele e de seus alunos que não estiverem no status 7 só pode ser menor ou igual a 4.
+        //Para serem autorizado
+          const hasStudant = await ProfStudent.findBy({professor_id:auth.user.id});
+          if (hasStudant == null) {
+            //Ver se a amostra é dele
+            //Ver se essa amostra estar na fase 1
+            if (solicitation.user_id != auth.user.id || solicitation.status != 1) {
+              return response.status(200).json({message:"Você tem somente permissão de autorizar a amostra.", error:true});              
+            }
+
+            //Ver se ele pode passar essa amostra de 1 para 2
+            check = await Solicitation.query().whereRaw(`user_id = ${auth.user.id} AND status > 1 AND status < 7`).fetch();
+            check = JSON.parse(JSON.stringify(check));
+            if (check.length >= 4) {
+              return response.status(200).json({message:"Você excedeu o seu limite de 4 análises de amostras simultânea. Por favor check se não há amostras para serem retiradas do laboratório.", error:true});                            
+            }
+
+            //Emails para o sasaki ou para o LRX
+            
+            //Emails para ele mesmo
+
+            await Solicitation.query().where('id', id).update({status:2});
+            return response.status(200).json({message:"Amostra autorizada com sucesso!", error:false});                            
+          }else{
+            //Amostras do estudante
+            //Verificar se amostra não está no passo diferente do 1
+            if (solicitation.status != 1) {
+              return response.status(200).json({message:"Você tem somente permissão de autorizar a amostra.", error:true});              
+            }
+
+            check = await Database.table({
+              u:'users',
+              ps:'professors_students',
+              s:'solicitations',
+            }).select({
+              user_id:'u.id',
+              id:'s.id',
+            }).whereRaw(`ps.professor_id = '${auth.user.id}' AND studant_id = u.id AND s.user_id IN (u.id, '${auth.user.id}')`);
+            console.log(check);
+          }
+      break;
+      default:
+        return response.status(406).json({message:"Usuário não autorizado", error:true});
+      break;
+    }
+    return solicitation;
+  }
+
+  async next_step_all ({ params, response, auth }) {
+    
+    return 0;
+  }
 
   /**
    * Delete a solicitation with id.
@@ -519,6 +587,10 @@ class SolicitationController {
           solicitation.status = -2;
       break;
       case 'professor':
+          //Amostra está no estato 1
+          if (solicitation.status != 1) {
+            return response.status(200).json({message:'Amostra precisa estar no primeiro estado para ser cancelada.', error:true});
+          }
           //Amostra é sua?
           if (auth.user.id == solicitation.user_id) {
             await Solicitation.query().where('name', name).update({status:-1});
