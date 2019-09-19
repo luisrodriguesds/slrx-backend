@@ -255,35 +255,12 @@ class UserController {
 	    		//Check if the cnpj exist and if is bond
 	    		let checkCompany = await Company.findBy({cnpj:company.cnpj});
 	    		if (checkCompany == null) {
-	    			company 		= await Company.create({...company});
-				    const user 		= await User.create({...data, other_email, phone2});
-					const comUser 	= await CompanyUser.create({company_datum_id:company.id, user_id:user.id});
-					
-					//send the emails
-					//confirm register in email
-					buff = new Buffer(data.email); 
-					linkConfirm =  `${Env.get('APP_URL')}/api/user/confirm?email=${buff.toString('base64')}`;
-					await Mail.send('emails.confirmEmail', {...data, linkConfirm}, (message) => {
-					message
-						.to(data.email)
-						.from('<from-email>')
-						.subject('SLRX - UFC | Confirmação de Cadastro')
-					});
-
-					//Sasaki confirm professor
-				    email_responsable 	= Env.get('MAIL_RESPONSIBLE'); 
-				   	linkConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=true`;
-				    linkNoConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=false`;
-				    await Mail.send('emails.companyConfirm', {linkConfirm,linkNoConfirm, company,...data}, (message) => {
-			          message
-			              .to(email_responsable)
-			              .from('<from-email>')
-			              .subject('SLRX - UFC | Confirmação de Cadastro de Empresa')
-			        });
-				    return response.status(200).json({message:`Seu cadastro foi efetuado com sucesso! Um email de confirmação foi enviado para ${data.email}. Acesse seu email e finalize seu cadastro. <br> Além disso, foi enviado um email para o responsável pelo labratório para que seja liberado seu acesso. Logo logo você receberá um email avisando a liberação do seu cadastro.`, error:false});
+	    			company 		= await Company.create({...company});   
+				}else{
+					checkCompany = JSON.parse(JSON.stringify(checkCompany));
+					company 		= checkCompany;
 				}
-				
-				company 		= checkCompany;
+
 				user 			= await User.create({...data, other_email, phone2});
 				const comUser 	= await CompanyUser.create({company_datum_id:company.id, user_id:user.id});
 				

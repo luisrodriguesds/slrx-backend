@@ -267,27 +267,31 @@ class SolicitationController {
     switch (auth.user.access_level_slug) {
       case 'administrador':
       case 'operador':
-          await Solicitation.query().where('id', id).update(data);
-          return response.status(200).json({message, error:false});
+          await Solicitation.query().where('id', id).update({...data, settings:JSON.stringify(settings)});
+          return response.status(200).json({message:message_success, error:false});
       break;
       case 'professor':
-          //Fazer as críticas para update
+          //Amostra é sua?
           if (auth.user.id == user_id) {
-              await Solicitation.query().where('id', id).update(data);
+              await Solicitation.query().where('id', id).update({...data, settings:JSON.stringify(settings)});
               return response.status(200).json({message:message_success, error:false});
           }
 
+          //Você tem estudantes vinculados a você?
           let hasStudant = await ProfStudent.query().where({professor_id:auth.user.id, studant_id:user_id}).fetch();
+              hasStudant = JSON.parse(JSON.stringify(hasStudant));                    
           if (hasStudant.length == 0) {
-              await Solicitation.query().where('id', id).update(data);  
               return response.status(406).json({message:message_faul, error:true});      
           }
 
-          hasStudant = JSON.parse(JSON.stringify(hasStudant));
-          if (hasStudant[0].studant_id == user_id) {
-              await Solicitation.query().where('id', id).update(data);  
-              return response.status(200).json({message:message_success, error:false});
+          //Este estudante é o dono da amostra?
+          if (hasStudant[0].studant_id != user_id) {
+            return response.status(406).json({message:message_faul, error:true});      
+          }else{
+            await Solicitation.query().where('id', id).update({...data, settings:JSON.stringify(settings)});  
+            return response.status(200).json({message:message_success, error:false});
           }
+
       break;
       case 'tecnico':
       case 'financeiro':
@@ -295,7 +299,7 @@ class SolicitationController {
       break;
       default:
           if (auth.user.id == user_id) {
-            await Solicitation.query().where('id', id).update(data);
+            await Solicitation.query().where('id', id).update({...data, settings:JSON.stringify(settings)});
             return response.status(200).json({message:message_success, error:false});
           }else{
             return response.status(406).json({message:message_faul, error:true});      
@@ -303,7 +307,7 @@ class SolicitationController {
       break;
     }
     
-    return response.status(200).json({message:message_success error:false});
+    return response.status(200).json({message:message_success, error:false});
   }
 
    
@@ -341,7 +345,6 @@ class SolicitationController {
           }
     
           hasStudant = JSON.parse(JSON.stringify(hasStudant));
-          // console.log(hasStudant);
           if (hasStudant[0].studant_id != res[0].user_id) {
             return response.status(406).json([]);        
           }
@@ -476,8 +479,7 @@ class SolicitationController {
               updated_at:'s.updated_at',
             }).whereRaw(`ps.professor_id = '${auth.user.id}' AND studant_id = u.id AND s.user_id IN (u.id, '${auth.user.id}') AND s.equipment_id = e.id AND s.name LIKE '%${filter}%'`).orderByRaw('s.created_at DESC, s.name ASC').paginate(page, perPage);
             for (let i = 0; i < res.data.length; i++) {
-              res.data[i].equipment = {name:res.data[i].equipment_name};        
-              res.data[i].settings = JSON.parse(res.data[i].settings); ;        
+              res.data[i].equipment = {name:res.data[i].equipment_name};       
             }
           }
       break;
@@ -517,10 +519,19 @@ class SolicitationController {
           solicitation.status = -2;
       break;
       case 'professor':
-          //Verificar se a amostra é de um dos seus alunos para cancelar
-          // let user = await User.query().where('id', auth.user.id).with('').fetch();
-          await Solicitation.query().where('id', id).update({status:-1});
-          solicitation.status = -1;
+          //Amostra é sua?
+          if (auth.user.id == solicitation.user_id) {
+            await Solicitation.query().where('name', name).update({status:-1});
+            solicitation.status = -1;
+          }else{
+            //Você tem estudantes vinculados a você?
+            let hasStudant = await ProfStudent.query().where({professor_id:auth.user.id, studant_id:solicitation.user_id}).fetch();
+                hasStudant = JSON.parse(JSON.stringify(hasStudant));          
+            if (hasStudant.length != 0 && hasStudant[0].studant_id != solicitation.user_id) {
+              await Solicitation.query().where('name', name).update({status:-1});
+              solicitation.status = -1;
+            }
+          }
       break;
       case 'tecnico':
       case 'financeiro':
@@ -534,7 +545,7 @@ class SolicitationController {
       break;
     }
 
-    return response.status(200).json({message:"Amostra canceladas com successo!", error:false, solicitation});
+    return response.status(200).json({message:'Amostra canceladas com successo!', error:false, solicitation});
   }
   
   async destroy_all ({request, response, auth }) {
@@ -553,9 +564,18 @@ class SolicitationController {
                   solicitation.status = -2;
               break;
               case 'professor':
-                //Fazer as críticas 
-                  await Solicitation.query().where('id', id).update({status:-1});
-                  solicitation.status = -1;
+                  //Amostra é sua?
+                  if (auth.user.id == solicitation.user_id) {
+                    await Solicitation.query().where('id', id).update({status:-1});
+                    solicitation.status = -1;
+                  }else{
+                    let hasStudant = await ProfStudent.query().where({professor_id:auth.user.id, studant_id:solicitation.user_id}).fetch();
+                    hasStudant = JSON.parse(JSON.stringify(hasStudant));          
+                    if (hasStudant.length != 0 && hasStudant[0].studant_id == solicitation.user_id) {
+                        await Solicitation.query().where('id', id).update({status:-1});
+                        solicitation.status = -1;
+                    }
+                  }
               break;
               case 'tecnico':
               case 'financeiro':
