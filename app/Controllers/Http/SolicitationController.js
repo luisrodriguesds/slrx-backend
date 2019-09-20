@@ -364,7 +364,7 @@ class SolicitationController {
 
   async all ({request, auth}) {
     const {page=1, perPage=10} = request.all();
-    let solicitations = [];
+    let solicitations = [], count = 0;
     switch (auth.user.access_level_slug) {
         case 'administrador':
         case 'operador':
@@ -394,26 +394,22 @@ class SolicitationController {
                 equipment_id:'s.equipment_id',
                 equipment:'e.id',
                 equipment_name:'e.name',
-                gap_id:'s.gap_id',
                 name:'s.name',
                 method:'s.method',
-                settings:'s.settings',
                 status:'s.status',
-                composition:'s.composition',
-                shape:'s.shape',
-                flammable:'s.flammable',
-                radioactive:'s.radioactive',
-                toxic:'s.toxic',
-                corrosive:'s.corrosive',
-                hygroscopic:'s.hygroscopic',
-                note:'s.note',
-                received_date:'s.received_date',
-                solicitation_date:'s.solicitation_date',
-                conclusion_date:'s.conclusion_date',
-                analyze_time:'s.analyze_time',
                 created_at:'s.created_at',
-                updated_at:'s.updated_at',
-              }).whereRaw(`ps.professor_id = '${auth.user.id}' AND ps.studant_id = u.id AND s.user_id IN (ps.studant_id, '${auth.user.id}') AND s.equipment_id = e.id`).orderByRaw('s.created_at DESC, s.name ASC').paginate(page, perPage);
+              }).whereRaw(`ps.professor_id = '${auth.user.id}' AND ps.studant_id = u.id AND s.user_id IN (u.id, '${auth.user.id}') AND s.equipment_id = e.id`)
+              .groupBy('s.name')
+              .having('s.name', '<=', 2)
+              .orderByRaw('s.created_at DESC, s.name ASC')
+              .paginate(page, perPage);
+
+              //Paginate não está retornando o total de resultados por algum motivo, tive que fazer na mão
+              count = await Database.table({ u:'users', ps:'professors_students', s:'solicitations'}).select({user_id:'u.id',id:'s.id',}).whereRaw(`ps.professor_id = '${auth.user.id}' AND ps.studant_id = u.id AND s.user_id IN (u.id, '${auth.user.id}')`).groupBy('s.name').having('s.name', '<=', 2);
+              count = count.length;
+              solicitations.total = count;
+              solicitations.lastPage = Math.round(count/solicitations.perPage);
+
               for (let i = 0; i < solicitations.data.length; i++) {
                 solicitations.data[i].equipment = {name:solicitations.data[i].equipment_name};       
               }
@@ -433,17 +429,17 @@ class SolicitationController {
 
   async filter ({ request, auth }) {
     const {filter=null, page=1, perPage=10} = request.all();
-    let res = [];
+    let res = [], count=0;
 
     switch (auth.user.access_level_slug) {
       case 'administrador':
       case 'operador':
-          res = await Solicitation.query().where('name', 'like', `%${filter}%`).with('equipment').orderByRaw('created_at DESC, name ASC').limit(50).paginate(page, perPage);
+          res = await Solicitation.query().where('name', 'like', `%${filter}%`).with('equipment').orderByRaw('created_at DESC, name ASC').limit(100).paginate(page, perPage);
       break;
       case 'professor':
           const hasStudant = await ProfStudent.findBy({professor_id:auth.user.id});
           if (hasStudant == null) {
-            res = await Solicitation.query().where('name', 'like', `%${filter}%`).andWhere({user_id:auth.user.id}).with('equipment').orderByRaw('created_at DESC, name ASC').limit(50).paginate(page, perPage);
+            res = await Solicitation.query().where('name', 'like', `%${filter}%`).andWhere({user_id:auth.user.id}).with('equipment').orderByRaw('created_at DESC, name ASC').limit(100).paginate(page, perPage);
           }else{
             //SELECT u.id, u.name, u.access_level, ps.professor_id, ps.studant_id, s.* FROM users as u, professors_students as ps, solicitations as s WHERE ps.professor_id = '2' AND studant_id = u.id AND s.user_id IN (u.id, '2');
             res = await Database.table({
@@ -458,26 +454,22 @@ class SolicitationController {
               equipment_id:'s.equipment_id',
               equipment:'e.id',
               equipment_name:'e.name',
-              gap_id:'s.gap_id',
               name:'s.name',
               method:'s.method',
-              settings:'s.settings',
               status:'s.status',
-              composition:'s.composition',
-              shape:'s.shape',
-              flammable:'s.flammable',
-              radioactive:'s.radioactive',
-              toxic:'s.toxic',
-              corrosive:'s.corrosive',
-              hygroscopic:'s.hygroscopic',
-              note:'s.note',
-              received_date:'s.received_date',
-              solicitation_date:'s.solicitation_date',
-              conclusion_date:'s.conclusion_date',
-              analyze_time:'s.analyze_time',
               created_at:'s.created_at',
-              updated_at:'s.updated_at',
-            }).whereRaw(`ps.professor_id = '${auth.user.id}' AND studant_id = u.id AND s.user_id IN (u.id, '${auth.user.id}') AND s.equipment_id = e.id AND s.name LIKE '%${filter}%'`).orderByRaw('s.created_at DESC, s.name ASC').paginate(page, perPage);
+            }).whereRaw(`ps.professor_id = '${auth.user.id}' AND ps.studant_id = u.id AND s.user_id IN (u.id, '${auth.user.id}') AND s.equipment_id = e.id AND s.name LIKE '%${filter}%'`)
+            .groupBy('s.name')
+            .having('s.name', '<=', 2)
+            .orderByRaw('s.created_at DESC, s.name ASC')
+            .paginate(page, perPage);
+
+            //Paginate não está retornando o total de resultados por algum motivo, tive que fazer na mão
+            count = await Database.table({ u:'users', ps:'professors_students', s:'solicitations'}).select({user_id:'u.id',id:'s.id',}).whereRaw(`ps.professor_id = '${auth.user.id}' AND ps.studant_id = u.id AND s.user_id IN (u.id, '${auth.user.id}') AND s.name LIKE '%${filter}%'`).groupBy('s.name').having('s.name', '<=', 2);
+            count = count.length;
+            res.total = count;
+            res.lastPage = Math.round(count/res.perPage);
+            
             for (let i = 0; i < res.data.length; i++) {
               res.data[i].equipment = {name:res.data[i].equipment_name};       
             }
@@ -498,16 +490,54 @@ class SolicitationController {
   async next_step ({ request, response, auth }) {
     const {id} = request.all();
     let check;
-    let solicitation = await Solicitation.findBy('id', id);
-    if (solicitation == null) {
+    let solicitation = await Solicitation.query().where('id', id).with('user').fetch();
+        solicitation = JSON.parse(JSON.stringify(solicitation));
+    if (solicitation.length == 0) {
       return response.status(406).json({message:"Solicitação não encontrada", error:true});
     }
-    solicitation = JSON.parse(JSON.stringify(solicitation));
-    
+      
+    solicitation = solicitation[0];
+
     switch (auth.user.access_level_slug) {
       case 'administrador':
       case 'operador':
         
+        switch (solicitation.status) {
+          case 1:
+            // 1 -> 2: Somente autorização
+            await Solicitation.query().where('id', id).update({status:(solicitation.status+1)});
+            
+            //Enviar email para o dono da amostra
+            
+
+            return response.status(200).json({message:"Amostra autorizada com sucesso!", error:false}); 
+          break;
+          case 2:
+            // 2 -> 3: [SLRX] Análise da Amostra Nome Autorizada 
+
+        
+          break;
+          case 3:
+            // 3 -> 4: [SLRX] Amostra  Nme Entregue ao Laboratório
+
+        
+          break;
+          case 4:
+            // 4 -> 5: [SLRX] Análise da Amostra Nome Em Processo de Análise
+
+        
+          break;
+          case 5:
+            // 5 -> 6: [SLRX] Análise da Amostra Nome Concluída
+
+       
+          break;
+          case 6:
+             // 6 -> 7: [LRX] Amostra Nome Finalizada!
+          break;
+          default:
+          break;
+        }
       break;
       case 'professor':
         //Professor pode autorizar até 4 amostras, dele e de seus alunos.
@@ -541,15 +571,13 @@ class SolicitationController {
               return response.status(200).json({message:"Você tem somente permissão de autorizar a amostra.", error:true});              
             }
 
-            check = await Database.table({
-              u:'users',
-              ps:'professors_students',
-              s:'solicitations',
-            }).select({
-              user_id:'u.id',
-              id:'s.id',
-            }).whereRaw(`ps.professor_id = '${auth.user.id}' AND studant_id = u.id AND s.user_id IN (u.id, '${auth.user.id}')`);
-            console.log(check);
+            check = await Database.table({ u:'users', ps:'professors_students', s:'solicitations'}).select({id:'s.id',}).whereRaw(`ps.professor_id = '${auth.user.id}' AND ps.studant_id = u.id AND s.user_id IN (u.id, '${auth.user.id}') AND s.status > 1 AND s.status < 7 `).groupBy('s.name').having('s.name', '<=', 2);
+            if (check.length >= 4) {
+              return response.status(200).json({message:"Você excedeu o seu limite de 4 análises de amostras simultânea. Por favor check se não há amostras para serem retiradas do laboratório.", error:true});                            
+            }
+
+            await Solicitation.query().where('id', id).update({status:2});
+            return response.status(200).json({message:"Amostra autorizada com sucesso!", error:false});
           }
       break;
       default:
@@ -559,9 +587,22 @@ class SolicitationController {
     return solicitation;
   }
 
-  async next_step_all ({ params, response, auth }) {
-    
-    return 0;
+  async next_step_all ({ params, request, response, auth }) {
+    const {array} = request.all();
+    const sol = await Promise.all(array.map(async id => {
+      try {
+        let solicitation = await Solicitation.findBy('id', id);
+        if (solicitation != null) {
+          solicitation = JSON.parse(JSON.stringify(solicitation));
+
+          return solicitation;
+        }
+      } catch (error) {
+        //Mandar um alerta pra mim
+      }
+    }));
+
+    return sol;
   }
 
   /**
