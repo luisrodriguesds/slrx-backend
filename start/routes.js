@@ -76,3 +76,6 @@ Route.group(() => {
 Route.group(() => {
 	Route.get('/api/equipment', 'EquipmentController.index').middleware(['auth']);
 });
+
+//Download do resultado
+Route.get('/api/results/:name', 'SolicitationController.results');

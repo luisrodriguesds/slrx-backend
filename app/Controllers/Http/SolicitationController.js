@@ -2,6 +2,8 @@
 const Solicitation  = use('App/Models/Solicitation');
 const User          = use('App/Models/User');
 const ProfStudent 	= use('App/Models/ProfessorsStudent');
+const Helpers       = use('Helpers');
+const Hash          = use('Hash');
 const Mail          = use('Mail');
 const Database      = use('Database');
 const dateformat    = use('dateformat');
@@ -489,6 +491,11 @@ class SolicitationController {
     return res;
   }
 
+  async results({params, response, auth}){
+    const {name} = params;
+    return response.download(Helpers.tmpPath(`results/${name}`));
+  }
+
   async next_step ({ request, response, auth }) {
     const {id} = request.all();
     let check, message, body, title;
@@ -544,6 +551,9 @@ class SolicitationController {
                       <p>Caso possua alguma dúvida, por favor entre em contato com o Laboratório 
                       por meio do endereço de email lrxufc@gmail.com, ou pelo telefone 85 33669013.</p>
                       <p style="text-align:right;">Atenciosamente,<br>Laboratório de Raios-X</p>`;
+            
+            await Solicitation.query().where('id', id).update({received_date:`${dateformat(Date.now(), 'yyyy-mm-dd HH:MM:ss')}`});
+
         
           break;
           case 5:
@@ -557,6 +567,28 @@ class SolicitationController {
                       por meio do endereço de email lrxufc@gmail.com, ou pelo telefone 85 33669013.</p>
                       <p style="text-align:right;">Atenciosamente,<br>Laboratório de Raios-X</p>`;
             //Receber o arquivo e colocar na pasta tmp
+           
+              let sample = request.file('sample', {
+                extnames: ['dat', 'json', 'png', 'jpg', 'jpeg', 'raw', 'txt', 'xrdml'],
+                size: '2mb'
+              });
+
+              if (sample === null) {
+                return response.status(200).json({message:"Arquivo da medida é necessário para ir ao próximo passado.", error:true});
+              }
+
+              const {extname, clientName} = sample;
+              let name = `${solicitation.name}_${Date.now().toString()}.${extname}`;
+              await sample.move(Helpers.tmpPath('results'), {
+                name,
+                overwrite: true
+              });
+            
+              if (!sample.moved()) {
+                return response.status(200).json({message:sample.error().message, error:true});
+              }
+
+              await Solicitation.query().where('id', id).update({download:name});
 
           break;
           case 6:
@@ -573,7 +605,8 @@ class SolicitationController {
                       <p>Caso possua alguma dúvida, por favor entre em contato com o Laboratório 
                       por meio do endereço de email lrxufc@gmail.com, ou pelo telefone 85 33669013.</p>
                       <p style="text-align:right;">Atenciosamente,<br>Laboratório de Raios-X</p>`;
-            //Deixar disponível para download
+            
+            await Solicitation.query().where('id', id).update({conclusion_date:`${dateformat(Date.now(), 'yyyy-mm-dd HH:MM:ss')}`});
 
           break;
           default:

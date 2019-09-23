@@ -1,8 +1,9 @@
 'use strict'
 
 /** @type {typeof import('@adonisjs/lucid/src/Lucid/Model')} */
-const Model = use('Model')
+const Model      = use('Model')
 const dateformat = use('dateformat');
+const Env        = use('Env');
 
 class Solicitation extends Model {
 	//Gettings and Settings
@@ -12,6 +13,10 @@ class Solicitation extends Model {
 
      getSettings(settings){
        return JSON.parse(settings);
+     }
+
+     getDownload(download){
+        return `${Env.get('APP_URL')}/api/results/${download}`;
      }
 
     //Relacoes

@@ -64,7 +64,8 @@ class SolicitationSchema extends Schema {
       table.datetime('solicitation_date')
       table.datetime('conclusion_date')
       table.time('analyze_time')
-
+      table.string('download', 254)
+      
       table.timestamps()
     })
   }
