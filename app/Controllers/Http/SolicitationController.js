@@ -539,6 +539,7 @@ class SolicitationController {
                       <p>Caso possua alguma dúvida, por favor entre em contato com o Laboratório 
                       por meio do endereço de email lrxufc@gmail.com, ou pelo telefone 85 33669013.</p>
                       <p style="text-align:right;">Atenciosamente,<br>Laboratório de Raios-X</p>`;
+            await Solicitation.query().where('id', id).update({received_date:`${dateformat(Date.now(), 'yyyy-mm-dd HH:MM:ss')}`});
         
           break;
           case 4:
@@ -551,10 +552,6 @@ class SolicitationController {
                       <p>Caso possua alguma dúvida, por favor entre em contato com o Laboratório 
                       por meio do endereço de email lrxufc@gmail.com, ou pelo telefone 85 33669013.</p>
                       <p style="text-align:right;">Atenciosamente,<br>Laboratório de Raios-X</p>`;
-            
-            await Solicitation.query().where('id', id).update({received_date:`${dateformat(Date.now(), 'yyyy-mm-dd HH:MM:ss')}`});
-
-        
           break;
           case 5:
             // 5 -> 6: [SLRX] Análise da Amostra Nome Concluída
@@ -574,10 +571,10 @@ class SolicitationController {
               });
 
               if (sample === null) {
-                return response.status(200).json({message:"Arquivo da medida é necessário para ir ao próximo passado.", error:true});
+                return response.status(200).json({message:"Arquivo da medida é necessário para avançar para o próximo passo.", error:true});
               }
 
-              const {extname, clientName} = sample;
+              const {extname} = sample;
               let name = `${solicitation.name}_${Date.now().toString()}.${extname}`;
               await sample.move(Helpers.tmpPath('results'), {
                 name,
