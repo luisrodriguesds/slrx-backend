@@ -299,7 +299,9 @@ class SolicitationController {
       break;
       case 'tecnico':
       case 'financeiro':
-          //do it
+          //do it later
+          await Solicitation.query().where('id', id).update({...data, settings:JSON.stringify(settings)});
+          return response.status(200).json({message:message_success, error:false});
       break;
       default:
           if (auth.user.id == user_id) {
@@ -356,7 +358,7 @@ class SolicitationController {
       break;
       case 'tecnico':
       case 'financeiro':
-          //do it
+          //do it later
           return res;
       break;
       default:
@@ -422,6 +424,31 @@ class SolicitationController {
         case 'tecnico':
         case 'financeiro':
             //do it
+            await auth.user.load('company');
+            const u = JSON.parse(JSON.stringify(auth.user));
+            solicitations = await Database.table({
+                u:'users',
+                cu:'companies_users',
+                s:'solicitations',
+                e:'equipment'
+              }).select({
+                user_id:'u.id',
+                id:'s.id',
+                user_id:'s.user_id',
+                equipment_id:'s.equipment_id',
+                equipment:'e.id',
+                equipment_name:'e.name',
+                name:'s.name',
+                method:'s.method',
+                status:'s.status',
+                created_at:'s.created_at',
+              }).whereRaw(`cu.company_datum_id = '${u.company[0].id}' AND cu.user_id = u.id AND s.user_id = u.id AND s.equipment_id = e.id`)
+              .orderByRaw('s.created_at DESC')
+              .paginate(page, perPage);
+
+              for (let i = 0; i < solicitations.data.length; i++) {
+                solicitations.data[i].equipment = {name:solicitations.data[i].equipment_name};       
+              }
         break;
         default:
           solicitations = await Solicitation.query().where({user_id:auth.user.id}).with('equipment').orderByRaw('created_at DESC, name ASC').limit(50).paginate(page, perPage);
@@ -482,6 +509,31 @@ class SolicitationController {
       case 'tecnico':
       case 'financeiro':
           //do it
+          await auth.user.load('company');
+          const u = JSON.parse(JSON.stringify(auth.user));
+          res = await Database.table({
+              u:'users',
+              cu:'companies_users',
+              s:'solicitations',
+              e:'equipment'
+            }).select({
+              user_id:'u.id',
+              id:'s.id',
+              user_id:'s.user_id',
+              equipment_id:'s.equipment_id',
+              equipment:'e.id',
+              equipment_name:'e.name',
+              name:'s.name',
+              method:'s.method',
+              status:'s.status',
+              created_at:'s.created_at',
+            }).whereRaw(`cu.company_datum_id = '${u.company[0].id}' AND cu.user_id = u.id AND s.user_id = u.id AND s.equipment_id = e.id AND s.name LIKE '%${filter}%'`)
+            .orderByRaw('s.created_at DESC')
+            .paginate(page, perPage);
+
+            for (let i = 0; i < res.data.length; i++) {
+              res.data[i].equipment = {name:res.data[i].equipment_name};       
+            }
       break;
       default:
           res = await Solicitation.query().where('name', 'like', `%${filter}%`).andWhere({user_id:auth.user.id}).with('equipment').orderBy('created_at', 'desc').limit(50).paginate(page, perPage);
@@ -555,7 +607,7 @@ class SolicitationController {
           break;
           case 5:
             // 5 -> 6: [SLRX] Análise da Amostra Nome Concluída
-            message = "Amostra em análise concluída";
+            message = "Arquivo enviado com sucesso!";
             title   = `[SLRX] Análise da Amostra ${solicitation.name} Concluída`;  
             body    = `<p>Olá ${solicitation.user.name},<br> sua solicitação de análise da amostra <b> ${solicitation.name}</b>  terminou
                       de ser analisada pelo laboratório. Contudo <b>o resultado somente lhe será disponibilizado após o recolhimento da amostra</b>.</p>
@@ -614,6 +666,7 @@ class SolicitationController {
 
         await Solicitation.query().where('id', id).update({status:(solicitation.status+1)});
 
+        //Liberar email quando estiver em produção!
         // Mail.send('emails.warningSample', {body}, (message) => {
         //   message
         //       .to(solicitation.user.email)
@@ -674,20 +727,143 @@ class SolicitationController {
 
   async next_step_all ({ params, request, response, auth }) {
     const {array} = request.all();
+    let check, message, body, title;
     const sol = await Promise.all(array.map(async id => {
       try {
         let solicitation = await Solicitation.findBy('id', id);
             solicitation = JSON.parse(JSON.stringify(solicitation));
-        if (solicitation != null && solicitation.status != 5) {
+        if (solicitation != null && solicitation.status != 5 && solicitation.status != 7) {
+            switch (auth.user.access_level_slug) {
+              case 'administrador':
+              case 'operador':
+
+                switch (solicitation.status) {
+                  case 1:
+                    // 1 -> 2: Somente autorização
+                    await Solicitation.query().where('id', id).update({status:(solicitation.status+1)});
+                    // return response.status(200).json({message:"Amostra autorizada com sucesso!", error:false}); 
+                  break;
+                  case 2:
+                    //As strings estão impedindo a continuação do código, pq?????????????
+                    // 2 -> 3: [SLRX] Análise da Amostra Nome Autorizada 
+                    // title   = '[SLRX] Análise da Amostra '+solicitation.name+' Autorizada';  
+                    // body    = '<p>Olá '+solicitation.user.name+',<br> sua solicitação de análise da amostra <b> '+solicitation.name+'</b> foi';
+                    // body    +='aprovada pelo responsável e pelo laboratório. Portanto, <strong>estamos aguardando o recebimento da amostra para iniciarmos a análise.</strong></p>';
+                    // body    +='<p>O horário de recibemento e entrega de amostras do Laboratório de Raios X é de segunda a sexta nos seguintes horários: 08:30 às 11:30 e 14:00 às 17:00.</p>';
+                    // body    +='<p>Lembre-se de etiquetar suas amostra usando o código de identificação da mesma.</p>';
+                    // body    +='<p>Caso possua alguma dúvida, por favor entre em contato com o Laboratório ';
+                    // body    +='por meio do endereço de email lrxufc@gmail.com, ou pelo telefone 85 33669013.</p>';
+                    // body    +='<p style="text-align:right;">Atenciosamente,<br>Laboratório de Raios-X</p>';
+                  break;
+                  case 3:
+                    // 3 -> 4: [SLRX] Amostra  Nme Entregue ao Laboratório
+                    // title   = '[SLRX] Amostra  '+solicitation.name+' Entregue ao Laboratório';  
+                    // body    = '<p>Olá '+solicitation.user.name+',<br> sua solicitação de análise da amostra <b> '+solicitation.name+'</b> foi';
+                    // body   += 'recebida pelo laboratório. No momento ela permanecerá na fila do equipamento <b>'+solicitation.equipment.name+'</b> até que seja analizada.</p>';
+                    // body   += '<p>Pedimos que aguarde até o processo ser concluído, quando você receberá um outro email notificando que a amostra entrou em processo de análise.</p>';
+                    // body   += '<p>Caso possua alguma dúvida, por favor entre em contato com o Laboratório ';
+                    // body   += 'por meio do endereço de email lrxufc@gmail.com, ou pelo telefone 85 33669013.</p>';
+                    // body   += '<p style="text-align:right;">Atenciosamente,<br>Laboratório de Raios-X</p>';
+             
+                    await Solicitation.query().where('id', id).update({received_date:`${dateformat(Date.now(), 'yyyy-mm-dd HH:MM:ss')}`});
+                  break;
+                  case 4:
+                    // 4 -> 5: [SLRX] Análise da Amostra Nome Em Processo de Análise
+                    // title   = '[SLRX] Análise da Amostra '+solicitation.name+' Em Processo de Análise';  
+                    // body    = '<p>Olá '+solicitation.user.name+',<br> sua solicitação de análise da amostra <b> '+solicitation.name+'</b> foi';
+                    // body    += 'recebida pelo laboratório. No momento ela permanecerá na fila do equipamento <b>'+solicitation.equipment.name+'</b> entrou em processo de análise.</p>';
+                    // body    += '<p>Em no máximo 24 horas, a análise estará pronta. Entretanto, a entrega do resultado será feita após o recolhimento da amostra.</p>';
+                    // body    += '<p>Caso possua alguma dúvida, por favor entre em contato com o Laboratório ';
+                    // body    += 'por meio do endereço de email lrxufc@gmail.com, ou pelo telefone 85 33669013.</p>';
+                    // body    += '<p style="text-align:right;">Atenciosamente,<br>Laboratório de Raios-X</p>';
+                  break;
+                  case 6:
+                     // 6 -> 7: [SLRX] Amostra Nome Finalizada!
+                    // title   = '[SLRX] Amostra '+solicitation.name+' Finalizada!';  
+                    // body    = '<p>Olá '+solicitation.user.name+',<br> sua solicitação de análise da amostra <b> ${solicitation.name}</b>  foi';
+                    // body   += 'realizado com sucesso, então agradecemos sua cooperação! Com isso, seu resultado já está disponível em nosso site.</p>';
+                    // body   += '<p>Para visualizá-lo acesse o <a href="'+Env.get('APP_URL')+'" target="_blank">Sistema de Solicitação de Análises de Raios-X</a>.<br>';
+                    // body   += 'Vá na aba <b>Concluídas</b>, procure pela amostra com identificação <b>${solicitation.name}</b>. Ao clicar nela';
+                    // body   += 'será exibida uma janela do lado direito contendo as informações da amostra. Nesta janela basta mover a barra para baixo, e então será possível';
+                    // body   += 'visualizar um <b>botão de download</b>, que ao clicar, o download do resultado será efetuado!<br>';
+                    // body   += 'O LRX agradece sua preferência pelos nosssos serviços! Estaremos sempre a disposição!</p>';
+                    // body   += '<p>Caso possua alguma dúvida, por favor entre em contato com o Laboratório ';
+                    // body   += 'por meio do endereço de email lrxufc@gmail.com, ou pelo telefone 85 33669013.</p>';
+                    // body   += '<p style="text-align:right;">Atenciosamente,<br>Laboratório de Raios-X</p>';
+                    
+                    await Solicitation.query().where('id', id).update({conclusion_date:`${dateformat(Date.now(), 'yyyy-mm-dd HH:MM:ss')}`});
+                  break;
+                }
+
+                await Solicitation.query().where('id', id).update({status:(solicitation.status+1)});
+
+                //Liberar email quando estiver em produção!
+                // Mail.send('emails.warningSample', {body}, (message) => {
+                //   message
+                //       .to(solicitation.user.email)
+                //       .from('<from-email>')
+                //       .subject(title)
+                // });
+
+                // return response.status(200).json({message, error:false}); 
+
+              break;
+              case 'professor':
+                //Professor pode autorizar até 4 amostras, dele e de seus alunos.
+                //A soma das amostras dele e de seus alunos que não estiverem no status 7 só pode ser menor ou igual a 4.
+                //Para serem autorizado
+                  const hasStudant = await ProfStudent.findBy({professor_id:auth.user.id});
+                  if (hasStudant == null) {
+                    //Ver se a amostra é dele
+                    //Ver se essa amostra estar na fase 1
+                    if (solicitation.user_id == auth.user.id || solicitation.status == 1) {
+                      // return response.status(200).json({message:"Você tem somente permissão de autorizar a amostra.", error:true});              
+                      //Ver se ele pode passar essa amostra de 1 para 2
+                      check = await Solicitation.query().whereRaw(`user_id = ${auth.user.id} AND status > 1 AND status < 7`).fetch();
+                      check = JSON.parse(JSON.stringify(check));
+                      if (check.length >= 4) {
+                        // return response.status(200).json({message:"Você excedeu o seu limite de 4 análises de amostras simultânea. Por favor check se não há amostras para serem retiradas do laboratório.", error:true});                            
+                      }else{
+                        //Emails para o sasaki ou para o LRX?
+                        
+                        //Emails para ele mesmo?
+
+                        await Solicitation.query().where('id', id).update({status:2});
+                        // return response.status(200).json({message:"Amostra autorizada com sucesso!", error:false});                            
+                      }
+
+                    }
+
+                  }else{
+                    //Amostras do estudante
+                    //Verificar se amostra não está no passo diferente do 1
+                    if (solicitation.status == 1) {
+                      // return response.status(200).json({message:"Você tem somente permissão de autorizar a amostra.", error:true});              
+                    
+                      check = await Database.table({ u:'users', ps:'professors_students', s:'solicitations'}).select({id:'s.id',}).whereRaw(`ps.professor_id = '${auth.user.id}' AND ps.studant_id = u.id AND s.user_id IN (u.id, '${auth.user.id}') AND s.status > 1 AND s.status < 7 `).groupBy('s.name').having('s.name', '<=', 2);
+                      if (check.length >= 4) {
+                        // return response.status(200).json({message:"Você excedeu o seu limite de 4 análises de amostras simultânea. Por favor check se não há amostras para serem retiradas do laboratório.", error:true});                            
+                      }else{
+                        await Solicitation.query().where('id', id).update({status:2});
+                        // return response.status(200).json({message:"Amostra autorizada com sucesso!", error:false});
+                      }
+                    }
+                  }
+              break;
+              default:
+                // return response.status(406).json({message:"Usuário não autorizado", error:true});
+              break;
+            }
 
           return solicitation;
         }
       } catch (error) {
         //Mandar um alerta pra mim
       }
+
     }));
 
-    return sol;
+    return response.status(200).json({message:"Operação realizada com sucesso!", error:false, sol:sol});
   }
 
   /**
@@ -733,7 +909,9 @@ class SolicitationController {
       break;
       case 'tecnico':
       case 'financeiro':
-          //do it
+          //do it later
+          await Solicitation.query().where('name', name).update({status:-2});
+          solicitation.status = -2;
       break;
       default:
           if (auth.user.id == solicitation.user_id) {
@@ -777,8 +955,9 @@ class SolicitationController {
               break;
               case 'tecnico':
               case 'financeiro':
-                //Fazer as críticas   
-
+                //Fazer as críticas later   
+                  await Solicitation.query().where('id', id).update({status:-1});
+                  solicitation.status = -1;
               break;
               default:
                   if (auth.user.id == solicitation.user_id) {
