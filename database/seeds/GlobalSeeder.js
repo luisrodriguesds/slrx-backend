@@ -36,6 +36,7 @@ class GlobalSeeder {
       phone2:'',
       confirm:1,
       confirm_email:1,
+      frx_permission:1,
       created_at:datenow,
       updated_at:datenow,
     });

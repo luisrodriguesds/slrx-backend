@@ -27,6 +27,7 @@ Route.group(() => {
 	Route.get('/api/user/token', 'UserController.token');
 	Route.get('/api/user/logout', 'UserController.logout').middleware(['auth']);
 	Route.get('/api/user/index', 'UserController.index').middleware(['auth']);
+	Route.get('/api/user/show', 'UserController.show').middleware(['auth']);
 	Route.get('/api/user/filter', 'UserController.filter').middleware(['auth']);
 	Route.get('/api/user/filterby', 'UserController.filterby').middleware(['auth']);
 
@@ -64,6 +65,7 @@ Route.group(() => {
 	Route.post('/api/solictation/next-step', 'SolicitationController.next_step').middleware(['auth']);
 	Route.get('/api/solictation/all', 'SolicitationController.all').middleware(['auth']);
 	Route.get('/api/solictation/filter', 'SolicitationController.filter').middleware(['auth']);
+	Route.get('/api/solictation/filterby', 'SolicitationController.filterby').middleware(['auth']);
 	Route.get('/api/solictation/show/:name', 'SolicitationController.show').middleware(['auth']);
 	Route.put('/api/solictation/update', 'SolicitationController.update').middleware(['auth']);
 	Route.delete('/api/solictation/destroy/:name', 'SolicitationController.destroy').middleware(['auth']);

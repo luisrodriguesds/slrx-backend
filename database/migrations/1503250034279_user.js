@@ -26,6 +26,7 @@ class UserSchema extends Schema {
       table.integer('limit', 11).notNullable().defaultTo(20)
       table.integer('drx_permission', 11).notNullable().defaultTo(1)
       table.integer('frx_permission', 11).notNullable().defaultTo(0)
+      table.string('photo', 254).defaultTo('avatar-1.png')
       table.integer('status', 11).notNullable().defaultTo(1)
 
       table.timestamps()

@@ -458,6 +458,30 @@ class SolicitationController {
     return solicitations;
   }
 
+  async filterby({request}){
+		const {filter, page=1, perPage=50} = request.all();
+    let solicitations;
+    
+    switch (filter) {
+      case "Abertas":
+        solicitations = await Solicitation.query().where('status', '!=', '7').with('equipment').orderBy('created_at', 'desc').paginate(page, perPage);
+      break;
+      case "DRX":
+          solicitations = await Solicitation.query().where('method', '=', 'DRX').with('equipment').orderBy('created_at', 'desc').paginate(page, perPage);        
+      break;
+      case "FRX":
+          solicitations = await Solicitation.query().where('method', '=', 'FRX').with('equipment').orderBy('created_at', 'desc').paginate(page, perPage);                
+      break;
+      case "Filtro":
+          solicitations = await Solicitation.query().with('equipment').orderBy('created_at', 'desc').paginate(page, perPage);                
+      break;
+      default:
+          solicitations = await Solicitation.query().where('status', '=', `${filter}`).with('equipment').orderBy('created_at', 'desc').paginate(page, perPage);                
+      break;
+    }
+    return solicitations;
+  }
+
   async filter ({ request, auth }) {
     const {filter=null, page=1, perPage=10} = request.all();
     let res = [], count=0;

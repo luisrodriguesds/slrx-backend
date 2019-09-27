@@ -15,11 +15,26 @@ class UserController {
 
 	async index({request, auth}){
     	const {page=1, perPage=10} = request.all();
-
+		let user;
 		switch(auth.user.access_level_slug){
 			case "operador":
 			case "administrador":
-				const user = await User.query().where('id', '!=', '1').orderBy('created_at', 'desc').paginate(page, perPage);
+				user = await User.query().where('id', '!=', '1').orderBy('created_at', 'desc').paginate(page, perPage);
+		        return user;
+			break;
+			case "professor":
+
+			break;
+		}
+	}
+
+	async show({request, auth}){
+		const {id} = request.all();
+		let user;
+		switch(auth.user.access_level_slug){
+			case "operador":
+			case "administrador":
+				user = await User.findBy('id', id);
 		        return user;
 			break;
 			case "professor":
@@ -101,30 +116,39 @@ class UserController {
 
   	}
 
-  	async filterby({request, response, auth}){
+  	async filterby({request}){
 		const {filter, page=1, perPage=50} = request.all();
 		let users;
 		switch(filter){
 			case "Filtro":
-				users = await User.query().where('id', '!=', '1').paginate(page, perPage);
+				users = await User.query().where('id', '!=', '1').orderBy('created_at', 'desc').paginate(page, perPage);
 			break;
 			case "Professores":
-				users = await User.query().where('access_level_slug', '=', 'professor').paginate(page, perPage);
+				users = await User.query().where('access_level_slug', '=', 'professor').orderBy('created_at', 'desc').paginate(page, perPage);
 			break;
 			case "Alunos":
-				users = await User.query().where('access_level_slug', '=', 'aluno').paginate(page, perPage);
+				users = await User.query().where('access_level_slug', '=', 'aluno').orderBy('created_at', 'desc').paginate(page, perPage);
 			break;
 			case "Operadores":
-				users = await User.query().where('access_level_slug', '=', 'operador').paginate(page, perPage);
+				users = await User.query().where('access_level_slug', '=', 'operador').orderBy('created_at', 'desc').paginate(page, perPage);
 			break;
 			case "Empresas":
-				// users = await User.query().where('').paginate(page, perPage);
+				//Exibir empresa adapdando para usuário
+				// id = company-${id}
+				//company_name ->  name
+				//access_level -> add
+				//company_email -> email
+				users = await Company.query().orderBy('created_at', 'desc').paginate(page, perPage);
+				users = JSON.parse(JSON.stringify(users));
+				users.data = users.data.map((user) => (
+					user = {id:`company-${user.id}`, name:user.company_name, access_level:'Empresa', email:`${user.company_email}`, created_at:user.created_at, status:user.status}
+				));
 			break;
 			case "Funcionários":
-				users = await User.query().where('access_level_slug', '=', 'financeiro').orWhere('access_level_slug', '=', 'tecnico').paginate(page, perPage);
+				users = await User.query().where('access_level_slug', '=', 'financeiro').orWhere('access_level_slug', '=', 'tecnico').orderBy('created_at', 'desc').paginate(page, perPage);
 			break;
 			case "Usuários Pendentes":
-				users = await User.query().where('status', '=', '0').paginate(page, perPage);
+				users = await User.query().where('status', '=', '0').orderBy('created_at', 'desc').paginate(page, perPage);
 			break;
 		}
 
