@@ -49,17 +49,9 @@ class GlobalSeeder {
     /*5*/{ name: 'Cadastrar Equipamento', url: '/equipamentos/cadastro', section:'Equipamentos', icon:'fas fa-plug', created_at:datenow, updated_at:datenow},
     /*6*/{ name: 'Todos os Usuários', url: '/usuarios', section:'Usuários', icon:'far fa-user', created_at:datenow, updated_at:datenow},
     /*7*/{ name: 'Cadastrar Usuário', url: '/usuarios/cadastro', section:'Usuários', icon:'far fa-user', created_at:datenow, updated_at:datenow},
-    /*8*/{ name: 'Professores', url: '/usuarios/professores', section:'Usuários', icon:'far fa-user', created_at:datenow, updated_at:datenow},
-    /*9*/{ name: 'Alunos', url: '/usuarios/alunos', section:'Usuários', icon:'far fa-user', created_at:datenow, updated_at:datenow},
-    /*10*/{ name: 'Operadores', url: '/usuarios/operadores', section:'Usuários', icon:'far fa-user', created_at:datenow, updated_at:datenow},
-    /*11*/{ name: 'Empresas', url: '/usuarios/empresas', section:'Usuários', icon:'far fa-user', created_at:datenow, updated_at:datenow},
-    /*12*/{ name: 'Funcionarios de Empresa', url: '/usuarios/funcionarios', section:'Usuários', icon:'far fa-user', created_at:datenow, updated_at:datenow},
-    /*13*/{ name: 'Usuários Pendentes', url: '/usuarios/pendentes', section:'Usuários', icon:'far fa-user', created_at:datenow, updated_at:datenow},
-    /*14*/{ name: 'Todas as Solicitações', url: '/solicitacoes', section:'Solicitações', icon:'fas fa-location-arrow', created_at:datenow, updated_at:datenow},
-    /*15*/{ name: 'Cadastrar Solicitação', url: '/solicitacoes/cadastro', section:'Solicitações', icon:'fas fa-location-arrow', created_at:datenow, updated_at:datenow},
-    /*16*/{ name: 'Abertas', url: '/solicitacoes/abertas', section:'Solicitações', icon:'fas fa-location-arrow', created_at:datenow, updated_at:datenow},
-    /*17*/{ name: 'Concluídas', url: '/solicitacoes/concluidas', section:'Solicitações', icon:'fas fa-location-arrow', created_at:datenow, updated_at:datenow},
-    /*18*/{ name: 'Tutoriais', url: '/solicitacoes/tutoriais', section:'Solicitações', icon:'fas fa-location-arrow', created_at:datenow, updated_at:datenow},
+    /*8*/{ name: 'Todas as Solicitações', url: '/solicitacoes', section:'Solicitações', icon:'fas fa-location-arrow', created_at:datenow, updated_at:datenow},
+    /*9*/{ name: 'Cadastrar Solicitação', url: '/solicitacoes/cadastro', section:'Solicitações', icon:'fas fa-location-arrow', created_at:datenow, updated_at:datenow},
+    /*10*/{ name: 'Tutoriais', url: '/solicitacoes/tutoriais', section:'Solicitações', icon:'fas fa-location-arrow', created_at:datenow, updated_at:datenow},
     ]);
 
      // Access Level
@@ -118,59 +110,27 @@ class GlobalSeeder {
       { menu_id: 7, access_id: 6, created_at:datenow, updated_at:datenow},
       { menu_id: 7, access_id: 7, created_at:datenow, updated_at:datenow},
 
-      //Professores
-      { menu_id: 9, access_id: 6, created_at:datenow, updated_at:datenow},
-      { menu_id: 8, access_id: 7, created_at:datenow, updated_at:datenow},
-    
-      //Alunos
-      { menu_id: 9, access_id: 6, created_at:datenow, updated_at:datenow},
-      { menu_id: 9, access_id: 7, created_at:datenow, updated_at:datenow},
-
-      //Operadores
-      { menu_id: 10, access_id: 6, created_at:datenow, updated_at:datenow},
-      { menu_id: 10, access_id: 7, created_at:datenow, updated_at:datenow},
-
-      //Empresas
-      { menu_id: 11, access_id: 6, created_at:datenow, updated_at:datenow},
-      { menu_id: 11, access_id: 7, created_at:datenow, updated_at:datenow},
-
-      //Funcionarios de Empresa
-      { menu_id: 12, access_id: 6, created_at:datenow, updated_at:datenow},
-      { menu_id: 12, access_id: 7, created_at:datenow, updated_at:datenow},
-
-      //Usuários Pendentes
-      { menu_id: 13, access_id: 6, created_at:datenow, updated_at:datenow},
-      { menu_id: 13, access_id: 7, created_at:datenow, updated_at:datenow},
-
       //Todas as Solicitações
-      { menu_id: 14, access_id: 1, created_at:datenow, updated_at:datenow},
-      { menu_id: 14, access_id: 2, created_at:datenow, updated_at:datenow},
-      { menu_id: 14, access_id: 3, created_at:datenow, updated_at:datenow},
-      { menu_id: 14, access_id: 4, created_at:datenow, updated_at:datenow},
-      { menu_id: 14, access_id: 5, created_at:datenow, updated_at:datenow},
-      { menu_id: 14, access_id: 6, created_at:datenow, updated_at:datenow},
-      { menu_id: 14, access_id: 7, created_at:datenow, updated_at:datenow},
+      { menu_id: 8, access_id: 1, created_at:datenow, updated_at:datenow},
+      { menu_id: 8, access_id: 2, created_at:datenow, updated_at:datenow},
+      { menu_id: 8, access_id: 3, created_at:datenow, updated_at:datenow},
+      { menu_id: 8, access_id: 4, created_at:datenow, updated_at:datenow},
+      { menu_id: 8, access_id: 5, created_at:datenow, updated_at:datenow},
+      { menu_id: 8, access_id: 6, created_at:datenow, updated_at:datenow},
+      { menu_id: 8, access_id: 7, created_at:datenow, updated_at:datenow},
       
       //Cadastrar Solicitação
-      { menu_id: 15, access_id: 1, created_at:datenow, updated_at:datenow},
-      { menu_id: 15, access_id: 2, created_at:datenow, updated_at:datenow},
-      { menu_id: 15, access_id: 3, created_at:datenow, updated_at:datenow},
-      { menu_id: 15, access_id: 4, created_at:datenow, updated_at:datenow},
-      { menu_id: 15, access_id: 5, created_at:datenow, updated_at:datenow},
-      { menu_id: 15, access_id: 6, created_at:datenow, updated_at:datenow},
-      { menu_id: 15, access_id: 7, created_at:datenow, updated_at:datenow},
-      
-      //Abertas
-      { menu_id: 16, access_id: 6, created_at:datenow, updated_at:datenow},
-      { menu_id: 16, access_id: 7, created_at:datenow, updated_at:datenow},
-      
-      //Concluídas
-      { menu_id: 17, access_id: 6, created_at:datenow, updated_at:datenow},
-      { menu_id: 17, access_id: 7, created_at:datenow, updated_at:datenow},
+      { menu_id: 9, access_id: 1, created_at:datenow, updated_at:datenow},
+      { menu_id: 9, access_id: 2, created_at:datenow, updated_at:datenow},
+      { menu_id: 9, access_id: 3, created_at:datenow, updated_at:datenow},
+      { menu_id: 9, access_id: 4, created_at:datenow, updated_at:datenow},
+      { menu_id: 9, access_id: 5, created_at:datenow, updated_at:datenow},
+      { menu_id: 9, access_id: 6, created_at:datenow, updated_at:datenow},
+      { menu_id: 9, access_id: 7, created_at:datenow, updated_at:datenow},
       
       //Tutoriais
-      { menu_id: 18, access_id: 6, created_at:datenow, updated_at:datenow},
-      { menu_id: 18, access_id: 7, created_at:datenow, updated_at:datenow},
+      { menu_id: 10, access_id: 6, created_at:datenow, updated_at:datenow},
+      { menu_id: 10, access_id: 7, created_at:datenow, updated_at:datenow},
       
 
       ]);

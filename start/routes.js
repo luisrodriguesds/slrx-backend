@@ -26,6 +26,9 @@ Route.group(() => {
 	Route.post('/api/user/auth', 'UserController.authentication');
 	Route.get('/api/user/token', 'UserController.token');
 	Route.get('/api/user/logout', 'UserController.logout').middleware(['auth']);
+	Route.get('/api/user/index', 'UserController.index').middleware(['auth']);
+	Route.get('/api/user/filter', 'UserController.filter').middleware(['auth']);
+	Route.get('/api/user/filterby', 'UserController.filterby').middleware(['auth']);
 
 	Route.get('/api/user/confirm', 'UserController.confirm');
 	Route.get('/api/user/confirm-bond', 'UserController.confirm_bond');

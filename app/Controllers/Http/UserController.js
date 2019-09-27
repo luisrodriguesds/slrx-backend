@@ -13,8 +13,19 @@ const Hash 			= use('Hash');
 
 class UserController {
 
-	async index({request}){
+	async index({request, auth}){
+    	const {page=1, perPage=10} = request.all();
 
+		switch(auth.user.access_level_slug){
+			case "operador":
+			case "administrador":
+				const user = await User.query().where('id', '!=', '1').orderBy('created_at', 'desc').paginate(page, perPage);
+		        return user;
+			break;
+			case "professor":
+
+			break;
+		}
 	}
 
 	async token({response, auth}){
@@ -72,6 +83,52 @@ class UserController {
 	  await auth.check()
 	  const token = auth.getAuthHeader()
       return await auth.revokeTokens([token]);
+  	}
+
+	async filter({request, response, auth}){
+		const {filter, page=1, perPage=50} = request.all();
+
+		switch(auth.user.access_level_slug){
+			case "operador":
+			case "administrador":
+				const user = await User.query().where('id', '!=', '1').andWhere('name', 'like', `%${filter}%`).orderBy('created_at', 'desc').paginate(page, perPage);
+		        return user;
+			break;
+			case "professor":
+
+			break;
+		}
+
+  	}
+
+  	async filterby({request, response, auth}){
+		const {filter, page=1, perPage=50} = request.all();
+		let users;
+		switch(filter){
+			case "Filtro":
+				users = await User.query().where('id', '!=', '1').paginate(page, perPage);
+			break;
+			case "Professores":
+				users = await User.query().where('access_level_slug', '=', 'professor').paginate(page, perPage);
+			break;
+			case "Alunos":
+				users = await User.query().where('access_level_slug', '=', 'aluno').paginate(page, perPage);
+			break;
+			case "Operadores":
+				users = await User.query().where('access_level_slug', '=', 'operador').paginate(page, perPage);
+			break;
+			case "Empresas":
+				// users = await User.query().where('').paginate(page, perPage);
+			break;
+			case "Funcionários":
+				users = await User.query().where('access_level_slug', '=', 'financeiro').orWhere('access_level_slug', '=', 'tecnico').paginate(page, perPage);
+			break;
+			case "Usuários Pendentes":
+				users = await User.query().where('status', '=', '0').paginate(page, perPage);
+			break;
+		}
+
+		return users;
   	}
 
 	async create({request, response}){
