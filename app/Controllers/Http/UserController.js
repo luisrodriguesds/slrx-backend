@@ -35,6 +35,9 @@ class UserController {
 			case "operador":
 			case "administrador":
 				user = await User.findBy('id', id);
+				await user.load('address');
+		        await user.load('academic');
+		        await user.load('company');
 		        return user;
 			break;
 			case "professor":
