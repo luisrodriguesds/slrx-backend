@@ -470,7 +470,7 @@ class UserController {
 		const access = ['aluno', 'professor', 'financeiro', 'tecnico', 'operador', 'autonomo', 'administrador'];
 		
 		//Middleware	
-		if (auth.user.id != user_id && auth.user.access_level_slug != 'administrador') {
+		if (auth.user.id != user_id && auth.user.access_level_slug != 'administrador' && auth.user.access_level_slug != 'operador') {
 			return response.status(200).json({message:"Usuário não autorizado", error:true});			
 		}
 
@@ -529,29 +529,29 @@ class UserController {
 				}
 
 				//Check if is adm end check if same field change
-				if (auth.user.access_level_slug == 'administrador' || auth.user.access_level_slug == 'operador') {
-					const {email_leader=null} = request.all();
-					if (access_level_slug == 'aluno') {
-						let prof = await User.query().where('email', email_leader).andWhere('access_level_slug', 'professor').fetch();
-							prof = JSON.parse(JSON.stringify(prof));
-						if (prof.length == 0) {
-							return response.status(200).json({message:"Professor não encontrado"})
-						}
+				// if (auth.user.access_level_slug == 'administrador' || auth.user.access_level_slug == 'operador') {
+				// 	const {email_leader=null} = request.all();
+				// 	if (access_level_slug == 'aluno') {
+				// 		let prof = await User.query().where('email', email_leader).andWhere('access_level_slug', 'professor').fetch();
+				// 			prof = JSON.parse(JSON.stringify(prof));
+				// 		if (prof.length == 0) {
+				// 			return response.status(200).json({message:"Professor não encontrado"})
+				// 		}
 
-						let profStudent = await ProfStudent.findBy('studant_id', user_id);
-							profStudent = JSON.parse(JSON.stringify(profStudent))
-						if (profStudent.professor_id != prof[0].id) {
-							//Check if this prof has more than 20 active studants
-							profStudent = await ProfStudent.findBy('professor_id', profStudent.professor_id);
-							profStudent = JSON.parse(JSON.stringify(profStudent))
-							if (profStudent.length >= 20) {
-								return response.status(200).json({message:"Professor já tem 20 alunos vinculados"});
-							}
-							//Terminar aqui
-							console.log(email_leader);
-						}
-					}
-				}
+				// 		let profStudent = await ProfStudent.findBy('studant_id', user_id);
+				// 			profStudent = JSON.parse(JSON.stringify(profStudent))
+				// 		if (profStudent.professor_id != prof[0].id) {
+				// 			//Check if this prof has more than 20 active studants
+				// 			profStudent = await ProfStudent.findBy('professor_id', profStudent.professor_id);
+				// 			profStudent = JSON.parse(JSON.stringify(profStudent))
+				// 			if (profStudent.length >= 20) {
+				// 				return response.status(200).json({message:"Professor já tem 20 alunos vinculados"});
+				// 			}
+				// 			//Terminar aqui
+				// 			console.log(email_leader);
+				// 		}
+				// 	}
+				// }
 
 				return response.status(200).json({message:"Dados alterados com sucesso!", error:false});				
 			break;
