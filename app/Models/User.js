@@ -58,6 +58,10 @@ class User extends Model {
     return this.hasOne('App/Models/Address');
   }
 
+  solicitations(){
+    return this.hasMany('App/Models/Solicitation');
+  }
+
   /**
    * A relationship on tokens is required for auth to
    * work. Since features like `refreshTokens` or

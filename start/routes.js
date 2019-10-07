@@ -66,6 +66,7 @@ Route.group(() => {
 	Route.post('/api/solictation/next-step', 'SolicitationController.next_step').middleware(['auth']);
 	Route.get('/api/solictation/all', 'SolicitationController.all').middleware(['auth']);
 	Route.get('/api/solictation/filter', 'SolicitationController.filter').middleware(['auth']);
+	Route.get('/api/solictation/filter/user', 'SolicitationController.filterByUser').middleware(['auth']);
 	Route.get('/api/solictation/filterby', 'SolicitationController.filterby').middleware(['auth']);
 	Route.get('/api/solictation/show/:name', 'SolicitationController.show').middleware(['auth']);
 	Route.put('/api/solictation/update', 'SolicitationController.update').middleware(['auth']);

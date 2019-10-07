@@ -5,9 +5,17 @@ const Model = use('Model')
 
 class CompanyDatum extends Model {
 
-	user(){
-		return this.belongsTo('App/Models/Users');
+	// users(){
+	// 	return this.belongsToMany('App/Models/User').pivotModel('App/Models/CompaniesUser')
+	// }
+
+	users(){
+		return this.belongsToMany('App/Models/User').pivotTable('companies_users');
 	}
+
+	// solicitations(){
+	// 	return this.manyThrough('App/Models/CompaniesUser', 'solicitations', 'user_id')
+	// }
 }
 
 module.exports = CompanyDatum

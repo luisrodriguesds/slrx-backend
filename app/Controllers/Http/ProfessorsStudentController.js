@@ -26,16 +26,34 @@ class ProfessorsStudentController {
 
   async show({request, response, auth}){
     const {studant_id=null, professor_id=null} = request.all();
-    if (professor_id == null) {
-      const studant = await ProfStudent.findBy('studant_id', studant_id);
+    let studant;
+    if (professor_id == 'null') {
+      studant = await ProfStudent.findBy('studant_id', studant_id);
       if (studant == null) {
-        return response.status(200).json({messaage:"Nenhum vínculo encontrado", error:true});
+        return response.status(200).json([]);
       }
 
       const professor_id = JSON.parse(JSON.stringify(studant)).professor_id;
       const professor = await User.findBy('id', professor_id);
+      await professor.load('academic');
       return response.status(200).json({...JSON.parse(JSON.stringify(professor)), error:false});
-      console.log(professor_id);
+      
+    }else{
+      let professor = await ProfStudent.query().where('professor_id', professor_id).fetch();
+      professor =  JSON.parse(JSON.stringify(professor));
+      if (professor.length == 0) {
+        return response.status(200).json([]);
+      }
+
+      let studant_id = []
+      for (let i = 0; i < professor.length; i++) {
+        studant_id.push(professor[i].studant_id);
+      }
+
+      studant_id = studant_id.join(',');
+
+      studant = await User.query().whereRaw(`id IN (${studant_id})`).fetch();
+      return studant;
     }
     return 0;
   }

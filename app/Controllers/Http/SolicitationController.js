@@ -458,6 +458,36 @@ class SolicitationController {
     return solicitations;
   }
 
+  async filterByUser({request}){
+    let {filter, user_id} = request.all();
+    let solicitations;
+    if (user_id.indexOf("company") == 0) {
+        user_id = user_id.replace("company-","");
+        let res = await Database.table({
+              u:'users',
+              cu:'companies_users',
+              s:'solicitations',
+              e:'equipment'
+            }).select({
+              user_id:'u.id',
+              id:'s.id',
+              user_id:'s.user_id',
+              equipment_id:'s.equipment_id',
+              equipment:'e.id',
+              equipment_name:'e.name',
+              name:'s.name',
+              method:'s.method',
+              status:'s.status',
+              created_at:'s.created_at',
+            }).whereRaw(`cu.company_datum_id = '${user_id}' AND cu.user_id = u.id AND s.user_id = u.id AND s.equipment_id = e.id AND s.name LIKE '%${filter}%'`)
+            .orderByRaw('s.created_at DESC')
+        return res;
+    }else{
+      solicitations = await Solicitation.query().where('name', 'LIKE', `%${filter}%`).andWhere('user_id', user_id).orderBy('created_at', 'desc').fetch();
+      return solicitations;
+    }
+  }
+
   async filterby({request}){
 		const {filter, page=1, perPage=50} = request.all();
     let solicitations;

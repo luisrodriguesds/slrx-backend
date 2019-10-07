@@ -10,6 +10,7 @@ const Mail 			= use('Mail');
 const Env 			= use('Env');
 const { validate } 	= use('Validator');
 const Hash 			= use('Hash');
+const Database 		= use('Database')
 
 class UserController {
 
@@ -28,17 +29,61 @@ class UserController {
 		}
 	}
 
-	async show({request, auth}){
-		const {id} = request.all();
+	async show({request, response, auth}){
+		let {id} = request.all();
 		let user;
 		switch(auth.user.access_level_slug){
 			case "operador":
 			case "administrador":
-				user = await User.findBy('id', id);
-				await user.load('address');
-		        await user.load('academic');
-		        await user.load('company');
-		        return user;
+				if (id.indexOf("company") == 0) {
+					id = id.replace("company-","");
+					let company = await Company.findBy('id', id);
+					if (company == null) {
+        				return response.status(200).json({message:"Nenhum Usuário encontrado", error:true});
+					}
+					await company.load('users');
+
+					company = JSON.parse(JSON.stringify(company));
+
+		            let solicitations = await Database.table({
+		                u:'users',
+		                cu:'companies_users',
+		                s:'solicitations',
+		                e:'equipment'
+		              }).select({
+		                user_id:'u.id',
+		                id:'s.id',
+		                user_id:'s.user_id',
+		                equipment_id:'s.equipment_id',
+		                equipment:'e.id',
+		                equipment_name:'e.name',
+		                name:'s.name',
+		                method:'s.method',
+		                status:'s.status',
+		                created_at:'s.created_at',
+		              }).whereRaw(`cu.company_datum_id = '${company.id}' AND cu.user_id = u.id AND s.user_id = u.id AND s.equipment_id = e.id`)
+		              .orderByRaw('s.created_at DESC')
+			        
+					user = {
+						name:company.fantasy_name,
+						access_level:'Empresa',
+						access_level_slug:'empresa',
+						email:company.company_email,
+						phone1:company.company_phone,
+						cnpj:company.cnpj,
+						employees:company.users,
+						solicitations
+					}
+
+					return user;
+				}else{
+					user = await User.findBy('id', id);
+					await user.load('address');
+			        await user.load('academic');
+			        await user.load('company');
+			        await user.load('solicitations');
+			        return user;
+				}
 			break;
 			case "professor":
 
@@ -224,7 +269,7 @@ class UserController {
 			    try{
 
 			    	//Create at database
-				    let {id} = await User.create({...data, other_email, phone2, access_level:"Aluno"});
+				    let {id} = await User.create({...data, other_email, phone2, status:0, access_level:"Aluno"});
 				    academyCreate = await Academy.create({...academy, user_id:id});
 				    let profStudent = await ProfStudent.create({professor_id:email_prof.id, studant_id:id, status:0});
 				    
@@ -277,7 +322,7 @@ class UserController {
 
 			    try{
 			    	//Create at database
-				    let {id} = await User.create({...data, other_email, phone2, access_level:"Professor"});
+				    let {id} = await User.create({...data, other_email, phone2, status:0, access_level:"Professor"});
 				    academyCreate = await Academy.create({...academy, user_id:id});
 				    
 				     //send the emails
@@ -345,7 +390,7 @@ class UserController {
 					company 		= checkCompany;
 				}
 
-				user 			= await User.create({...data, other_email, phone2});
+				user 			= await User.create({...data, other_email, phone2, frx_permission:1});
 				const comUser 	= await CompanyUser.create({company_datum_id:company.id, user_id:user.id});
 				
 				//send the emails
@@ -389,7 +434,7 @@ class UserController {
 			    	return response.status(200).json({...validation.messages()[0], error:true});
 				}
 
-					  user = await User.create({...data, other_email, phone2, access_level:"Operador"});
+					  user = await User.create({...data, other_email, phone2, frx_permission:1, access_level:"Operador"});
 				userAddress = await Address.create({...operator, user_id:user.id, status:1});
 
 				//send the emails
@@ -433,7 +478,7 @@ class UserController {
 			    	return response.status(200).json({...validation.messages()[0], error:true});
 				}
 
-					  user = await User.create({...data, other_email, phone2, access_level:"Autônomo"});
+					  user = await User.create({...data, other_email, frx_permission:1, phone2, access_level:"Autônomo"});
 				userAddress = await Address.create({...freelance, user_id:user.id, status:1});
 
 				//send the emails
@@ -638,7 +683,7 @@ class UserController {
     	email = buff.toString('ascii');
     	
     	if (confirm == "true") {
-    		await User.query().where('email', email).update({confirm:1});
+    		await User.query().where('email', email).update({confirm:1, status:1});
     		await Mail.send('emails.accessReleased', {email}, (message) => {
 	          message
 	              .to(email)
@@ -685,7 +730,7 @@ class UserController {
     	await ProfStudent.query().where('id', prof_st.id).update({status:1});
 
     	//Atualizar campo confirm
-    	await User.query().where('id', studant.id).update({confirm:1});
+    	await User.query().where('id', studant.id).update({confirm:1, status:1});
 
     	//Enviar email avisando do seu cadastro
     	await Mail.send('emails.accessReleased', {email}, (message) => {
