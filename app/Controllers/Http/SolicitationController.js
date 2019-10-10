@@ -1035,6 +1035,38 @@ class SolicitationController {
     return response.status(200).json({message:"Amostras canceladas com successo!", error:false});
   }
 
+  async proposta ({request, response, auth }) {
+    let data = request.all();
+    let array_drx = [], array_frx = [], referencia;
+    
+    //Amostras que foram selecionadas na proposta
+    let solicitation = await Solicitation.query().whereRaw(`id in (${data.solicitations.join()})`).orderBy('name', 'asc').fetch();
+        solicitation = JSON.parse(JSON.stringify(solicitation));
+    if (solicitation.length == 0) {
+      return response.status(200).json({message:"Nenhuma amostra foi encontrada", error:true});
+    }
+
+    array_drx = solicitation.filter(v => v.method == 'DRX');
+    array_frx = solicitation.filter(v => v.method == 'FRX');
+
+    if (array_drx.length != 0) {
+      //Caso queria selecionar da amostra inicial ate a quantidade informada
+      if (data.qtdDrxMedida != null) {
+        //Selecione somente 1 amostra para selecionar o restante so acrescentar o numero
+        if (array_drx.length <= parseInt(data.qtdDrxMedida)) {
+          
+
+        }
+      }
+    }
+
+    if (array_frx.length != 0) {
+      
+    }
+
+    return request.all();
+  }
+
 }
 
 module.exports = SolicitationController

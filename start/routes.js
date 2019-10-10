@@ -72,6 +72,8 @@ Route.group(() => {
 	Route.put('/api/solictation/update', 'SolicitationController.update').middleware(['auth']);
 	Route.delete('/api/solictation/destroy/:name', 'SolicitationController.destroy').middleware(['auth']);
 	Route.delete('/api/solictation/destroy-all', 'SolicitationController.destroy_all').middleware(['auth']);
+
+	Route.post('/api/solictation/proposta', 'SolicitationController.proposta').middleware(['auth']);
 });
 
 //Gaps
