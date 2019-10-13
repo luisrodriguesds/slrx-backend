@@ -1,7 +1,8 @@
 'use strict'
 const Solicitation  = use('App/Models/Solicitation');
 const User          = use('App/Models/User');
-const ProfStudent 	= use('App/Models/ProfessorsStudent');
+const ProfStudent   = use('App/Models/ProfessorsStudent');
+const Document 	    = use('App/Models/Document');
 const Helpers       = use('Helpers');
 const Hash          = use('Hash');
 const Mail          = use('Mail');
@@ -1035,10 +1036,11 @@ class SolicitationController {
     return response.status(200).json({message:"Amostras canceladas com successo!", error:false});
   }
 
-  async proposta ({request, response, auth }) {
-    let data = request.all();
-    let array_drx = [], array_frx = [], referencia;
-    
+  async proposta ({request, response, auth, view}) {
+    let {data} = request.all();
+    let array_drx = [], array_frx = [], referencia, start, end, res, valor_total, checkQtdPre;
+    data = JSON.parse(decodeURIComponent(data));
+
     //Amostras que foram selecionadas na proposta
     let solicitation = await Solicitation.query().whereRaw(`id in (${data.solicitations.join()})`).orderBy('name', 'asc').fetch();
         solicitation = JSON.parse(JSON.stringify(solicitation));
@@ -1054,17 +1056,165 @@ class SolicitationController {
       if (data.qtdDrxMedida != null) {
         //Selecione somente 1 amostra para selecionar o restante so acrescentar o numero
         if (array_drx.length <= parseInt(data.qtdDrxMedida)) {
-          
-
+          referencia  = array_drx[0].name.slice(0, -3);
+          start       = array_drx[0].name.slice(-3);
+          end         = parseInt(start)+parseInt(data.qtdDrxMedida)-1;
+          end         = ((end < 9) ? '00'+end : ((end > 9 && end < 99) ? '0'+end : end));
+          res         = await Solicitation.query().whereRaw(`name BETWEEN '${referencia+start}' AND '${referencia+end}'`).fetch();
+          array_drx   = JSON.parse(JSON.stringify(res));
         }
       }
     }
 
     if (array_frx.length != 0) {
-      
+      //Caso queria selecionar da amostra inicial ate a quantidade informada
+      if (data.qtdFrxSemiQuantitativa != null) {
+        //Selecione somente 1 amostra para selecionar o restante so acrescentar o numero
+        if (array_frx.length <= parseInt(data.qtdFrxSemiQuantitativa)) {
+          referencia  = array_frx[0].name.slice(0, -3);
+          start       = array_frx[0].name.slice(-3);
+          end         = parseInt(start)+parseInt(data.qtdFrxSemiQuantitativa)-1;
+          end         = ((end < 9) ? '00'+end : ((end > 9 && end < 99) ? '0'+end : end));
+          res         = await Solicitation.query().whereRaw(`name BETWEEN '${referencia+start}' AND '${referencia+end}'`).fetch();
+          array_frx   = JSON.parse(JSON.stringify(res));
+        }
+      }
     }
 
-    return request.all();
+    valor_total=0;
+
+    //PRECOS FRX
+    if (array_frx.length > 0) {
+        data.qtdFrxSemiQuantitativa = array_frx.length;
+        //Preco
+        if (data.frxSemiQuantitativa == null) {
+            data.frxSemiQuantitativa = ((data.qtdFrxSemiQuantitativa <= 3) ? 232.00 : ((data.qtdFrxSemiQuantitativa >= 4 && data.qtdFrxSemiQuantitativa <= 10) ? 193.00 : 155.00 ));
+        }
+    
+        //Atualiza valor total
+        valor_total+= parseFloat(data.frxSemiQuantitativa)*data.qtdFrxSemiQuantitativa;
+    }else{
+        data.qtdFrxSemiQuantitativa = 0;
+        data.frxSemiQuantitativa = 0;
+    }
+
+    //PREÇOS DRX
+    if (array_drx.length > 0) {
+        data.qtdDrxMedida = array_drx.length;
+        if (data.drxMedida == null) {
+            data.drxMedida = ((data.qtdDrxMedida <= 3) ? 328.00 : ((data.qtdDrxMedida >= 4 && data.qtdDrxMedida <= 10) ? 274.00 : 219.00)); 
+        }
+        valor_total+=data.qtdDrxMedida*parseFloat(data.drxMedida);
+    }
+
+    //PRECO PREPARACAO DE AMOSTRA
+    if (parseInt(data.qtdPreparacaoDeAmostras) > 0) {
+        checkQtdPre = (((array_drx.length >0) ? array_drx.length : 0) + ((array_frx.length >0) ? array_frx.length : 0)); 
+        
+        if (checkQtdPre < parseInt(data.qtdPreparacaoDeAmostras)) {
+            data.qtdPreparacaoDeAmostras = checkQtdPre;
+        }
+
+        if (data.preparacaoDeAmostras == null) {
+            data.preparacaoDeAmostras = ((parseInt(data.qtdPreparacaoDeAmostras) <=3 ) ? 30.0 : ((parseInt(data.qtdPreparacaoDeAmostras) >=4 && parseInt(data.qtdPreparacaoDeAmostras) <=10) ? 20.0 : 10.0));        
+        }
+        valor_total+=data.qtdPreparacaoDeAmostras*parseFloat(data.preparacaoDeAmostras);
+    }
+
+
+    //PRECO IDENTIFICACAO DE FASE DRX
+    if (data.qtdDrxIdentificacao != null) {
+        if (data.drxIdentificacao == null) {
+            data.drxIdentificacao = ((data.qtdDrxIdentificacao <= 3) ? 328.00 : ((data.qtdDrxIdentificacao >= 4 && data.qtdDrxIdentificacao <= 10) ? 274.00 : 219.00)); 
+        }
+        valor_total+=data.qtdDrxIdentificacao*parseFloat(data.drxIdentificacao);
+    }
+
+    //PRECO QUANTIFICACAO DE FASE DRX
+    if (data.qtdDrxQuantificacao != null) {
+        if (data.drxQuantificacao == null) {
+            data.drxQuantificacao = ((data.qtdDrxQuantificacao <= 3) ? 584.50 : ((data.qtdDrxQuantificacao >= 4 && data.qtdDrxQuantificacao <= 10) ? 584.50 : 584.50)); 
+        }
+        valor_total+=data.qtdDrxQuantificacao*parseFloat(data.drxQuantificacao);
+    }
+
+    //PRECO CALCULO DE FASE DRX
+    if (data.qtdDrxCalculo != null) {
+        if (data.drxCalculo == null) {
+            data.drxCalculo = ((data.qtdDrxCalculo <= 3) ? 584.50 : ((data.qtdDrxCalculo >= 4 && data.qtdDrxCalculo <= 10) ? 584.50 : 584.50)); 
+        }
+        valor_total+=data.qtdDrxCalculo*parseFloat(data.drxCalculo);
+    }
+
+    //Lista de amostras
+    let list = [];
+    array_drx.map(v => {
+      list.push(v.name)
+    })
+
+    array_frx.map(v => {
+      list.push(v.name)
+    })
+
+    list = list.join();
+
+    console.log(valor_total);
+    console.log(list);
+
+    //USER
+    let full = {};
+    let user_id = (array_frx.length > 0) ? array_frx[0].user_id : array_drx[0].user_id;
+    let user = await User.findBy('id', user_id)
+        await user.load('company');
+        await user.load('address');
+        user = JSON.parse(JSON.stringify(user));
+    if (user.access_level_slug == 'tecnico' || user.access_level_slug == 'financeiro') {
+      full.name         = user.company[0].company_name;
+      full.doc          = user.company[0].cnpj;
+      full.street       = user.company[0].street;
+      full.number       = user.company[0].number;
+      full.cep          = user.company[0].cep;
+      full.neighborhood = user.company[0].neighborhood;
+      full.city         = user.company[0].company_city;
+      full.state        = user.company[0].company_state;
+    }else if(user.access_level_slug == 'autonomo'){
+      full.name         = user.name;
+      full.doc          = user.cpf;
+      full.street       = user.address.street_address;
+      full.number       = user.address.number_address;
+      full.cep          = user.address.cep_address;
+      full.neighborhood = user.address.neighborhood_address;
+      full.city         = user.address.city_address;
+      full.state        = user.address.state_address;
+    }else{
+      return response.status(200).json({message:"Usuário não pode redecer proposta.", error:true})
+    }
+
+    //Formatc money
+    const formatMoney = (numero) => {
+      numero = parseFloat(numero);
+      numero = numero.toFixed(2).split('.');
+      numero[0] = numero[0].split(/(?=(?:...)*$)/).join('.');
+      return numero.join(',');
+    }
+
+    //Diff Between dates
+
+    const date1     = new Date();
+    const date2     = new Date(data.dataPrazo);
+    const timeDiff  = Math.abs(date2.getTime() - date1.getTime());
+    const diffDays  = Math.ceil(timeDiff / (1000 * 3600 * 24));
+    
+    let numDoc    = parseInt(Math.random()*10);
+        numDoc    = "000"+numDoc;
+
+    //Salvar link em bd
+    // const url = request.all().data;
+    // await Document.create({user_id, url, type:'proposta'})
+
+
+
+    return view.render('propostas', {data, full, list, valor_total, formatMoney, array_frx, array_drx, diffDays, numDoc});
   }
 
 }
