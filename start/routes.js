@@ -74,11 +74,14 @@ Route.group(() => {
 	Route.delete('/api/solictation/destroy-all', 'SolicitationController.destroy_all').middleware(['auth']);
 
 	Route.get('/api/solictation/proposta', 'SolicitationController.proposta');
+	Route.get('/api/solictation/ordem', 'SolicitationController.ordem');
 });
 
 //Documents - Proposta e ordem de serviço
 Route.group(() => {
 	Route.post('/api/documents/proposta', 'DocumentController.store_proposta').middleware(['auth']);
+	Route.get('/api/documents/proposta', 'DocumentController.index_proposta').middleware(['auth']);
+
 	Route.post('/api/documents/ordem', 'DocumentController.store_ordem').middleware(['auth']);
 });
 
