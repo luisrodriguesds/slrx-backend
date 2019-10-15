@@ -1158,9 +1158,6 @@ class SolicitationController {
 
     list = list.join();
 
-    console.log(valor_total);
-    console.log(list);
-
     //USER
     let full = {};
     let user_id = (array_frx.length > 0) ? array_frx[0].user_id : array_drx[0].user_id;
@@ -1208,13 +1205,28 @@ class SolicitationController {
     let numDoc    = parseInt(Math.random()*10);
         numDoc    = "000"+numDoc;
 
+    function formatDate(date) {
+      var monthNames = [
+        "Janeiro", "Fevereiro", "Março",
+        "Abril", "Maio", "Junho", "Julho",
+        "Agosto", "Setembro", "Outubro",
+        "Novembro", "Dezembro"
+      ];
+    
+      var day = date.getDate();
+      var monthIndex = date.getMonth();
+      var year = date.getFullYear();
+    
+      return day + ' de ' + monthNames[monthIndex] + ' de ' + year;
+    }
+
     //Salvar link em bd
     // const url = request.all().data;
     // await Document.create({user_id, url, type:'proposta'})
 
 
 
-    return view.render('propostas', {data, full, list, valor_total, formatMoney, array_frx, array_drx, diffDays, numDoc});
+    return view.render('propostas', {data, full, list, valor_total, formatMoney, array_frx, array_drx, diffDays, date:formatDate(new Date), numDoc});
   }
 
 
@@ -1357,6 +1369,9 @@ class SolicitationController {
       full.neighborhood = user.company[0].neighborhood;
       full.city         = user.company[0].company_city;
       full.state        = user.company[0].company_state;
+      full.phone        = user.company[0].company_phone;
+      full.email        = user.company[0].company_email;
+      full.sr           = user.company[0].state_registration == null ? user.company[0].state_registration : '';
     }else if(user.access_level_slug == 'autonomo'){
       full.name         = user.name;
       full.doc          = user.cpf;
@@ -1379,22 +1394,91 @@ class SolicitationController {
     }
 
     //Diff Between dates
-
-    const date1     = new Date();
-    const date2     = new Date(data.dataPrazo);
-    const timeDiff  = Math.abs(date2.getTime() - date1.getTime());
-    const diffDays  = Math.ceil(timeDiff / (1000 * 3600 * 24));
-    
     let numDoc    = parseInt(Math.random()*10);
         numDoc    = "000"+numDoc;
 
-    //Salvar link em bd
-    // const url = request.all().data;
-    // await Document.create({user_id, url, type:'proposta'})
+    function formatDate(date) {
+      var monthNames = [
+        "Janeiro", "Fevereiro", "Março",
+        "Abril", "Maio", "Junho", "Julho",
+        "Agosto", "Setembro", "Outubro",
+        "Novembro", "Dezembro"
+      ];
+    
+      var day = date.getDate();
+      var monthIndex = date.getMonth();
+      var year = date.getFullYear();
+    
+      return day + ' de ' + monthNames[monthIndex] + ' de ' + year;
+    }
+    
+    //Array dos serviços
+    let relatorio = [];
 
+    if (array_frx.length > 0) {
+      relatorio.push({
+        desc:'Fluorescência de raios-x (FRX): Semi-quantitativa',
+        qtd:array_frx.length,
+        preco:data.frxSemiQuantitativa,
+        total:data.qtdFrxSemiQuantitativa*data.frxSemiQuantitativa,
+        list:listFRX
+      })
+    }
 
+    if (array_drx.length > 0) {
+      if (data.qtdDrxMedida > 0) {        
+        relatorio.push({
+          desc:'Difração de raios-x (DRX): Medida',
+          qtd:array_drx.length,
+          preco:data.drxMedida,
+          total:data.qtdDrxMedida*data.drxMedida,
+          list:listDRX
+        })
+      }
 
-    return view.render('ordem', {data, full, listFRX, listDRX, valor_total, formatMoney, array_frx, array_drx, diffDays, numDoc});
+      if (data.qtdDrxIdentificacao > 0) {
+        relatorio.push({
+          desc:'Difração de raios-x (DRX): Identificação de Fases',
+          qtd:data.qtdDrxIdentificacao,
+          preco:data.drxIdentificacao,
+          total:data.qtdDrxIdentificacao*data.drxIdentificacao,
+          list:''
+        })
+      }
+
+      if (data.qtdDrxQuantificacao > 0) {
+        relatorio.push({
+          desc:'Difração de raios-x (DRX): Quantificação de Fases - Método Rietveld',
+          qtd:data.qtdDrxQuantificacao,
+          preco:data.drxQuantificacao,
+          total:data.qtdDrxQuantificacao*data.drxQuantificacao,
+          list:''
+        })
+      }
+
+      if (data.qtdDrxCalculo > 0) {
+        relatorio.push({
+          desc:'Difração de raios-x (DRX): Cálculo de Tamanho médio de partículas',
+          qtd:data.qtdDrxCalculo,
+          preco:data.drxCalculo,
+          total:data.qtdDrxCalculo*data.drxCalculo,
+          list:''
+        })
+      }
+
+    }
+
+    if (data.qtdPreparacaoDeAmostras > 0) {
+      relatorio.push({
+        desc:'Preparação de Amostras',
+        qtd:data.qtdPreparacaoDeAmostras,
+        preco:data.preparacaoDeAmostras,
+        total:data.qtdPreparacaoDeAmostras*data.preparacaoDeAmostras,
+        list:''
+      })
+    }
+
+    return view.render('ordem', {data, full, valor_total, user, relatorio, formatMoney,  date:formatDate(new Date()), numDoc});
   }
 
 }

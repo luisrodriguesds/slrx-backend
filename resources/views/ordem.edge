@@ -69,7 +69,7 @@
         <table cellspacing="0" style="border: 1px solid;">
             <tr>
                 <td width="640px"><strong>SOLICITAÇÃO DE ENSAIO Nº: 0000/2019</strong></td>
-                <td width="640px">FORTALEZA, 22 de julho de 2019</td>
+            <td width="640px">FORTALEZA, {{date}}</td>
             </tr>
         </table>
         <br/>
@@ -77,28 +77,28 @@
         <table cellspacing="0" style="border: 1px solid;">
             <tbody>
                 <tr>
-                    <td colspan="4">NOME/RAZÃO SOCIAL: SIGMA EXTRACAO DE METAIS LTDA</td>
+                    <td colspan="4">NOME/RAZÃO SOCIAL: {{full.name}}</td>
                 </tr>
                 <tr>
-                    <td colspan="4">TELEFONE:(85) 98802-7407</td>
+                    <td colspan="4">TELEFONE:{{full.phone}}</td>
                 </tr>
                 <tr>
-                    <td colspan="2">CNPJ/CPF: 06.250.885/0001-63</td>
-                    <td colspan="2">INSC. ESTADUAL OU MUNICIPAL:</td>
+                    <td colspan="2">CNPJ/CPF: {{full.doc}}</td>
+                    <td colspan="2">INSC. ESTADUAL OU MUNICIPAL: {{ full.sr}}</td>
                 </tr>
                 <tr>
-                    <td colspan="2">CONTATO DO FINANCEIRO:</td>
-                    <td colspan="2">E-MAIL ENCAMINHAMENTO DA NOTA FISCAL ELETRÔNICA: sandmine.participacoes@gmail.com</td>
+                    <td colspan="2">CONTATO DO FINANCEIRO: </td>
+                    <td colspan="2">E-MAIL ENCAMINHAMENTO DA NOTA FISCAL ELETRÔNICA: {{ full.email}}</td>
                 </tr>
                 <tr>
-                    <td colspan="2">ENDEREÇO DO ESCRITÓRIO:DISTRITO SAO BERNARDO, S/N, SAO BERNARDO</td>
-                    <td colspan="2">TELEFONES DO FINANCEIRO: (88) 98113-1239</td>
+                    <td colspan="2">ENDEREÇO DO ESCRITÓRIO: {{full.street}}, {{full.number}}, {{full.neighborhood}}</td>
+                    <td colspan="2">TELEFONES DO FINANCEIRO: {{user.phone1}}</td>
                 </tr>
                 <tr>
-                    <td width="320px">BAIRRO: SAO BERNARDO</td>
-                    <td width="320px">CIDADE: QUIXADA - CE</td>
-                    <td width="320px">ESTADO:CE</td>
-                    <td width="320px">CEP: 63900-000</td>
+                    <td width="320px">BAIRRO: {{full.neighborhood}}</td>
+                    <td width="320px">CIDADE: {{full.city}} - {{full.state}}</td>
+                    <td width="320px">ESTADO:{{full.state}}</td>
+                    <td width="320px">CEP: {{full.cep}}</td>
                 </tr>
             </tbody>
         </table>
@@ -107,7 +107,7 @@
         <table cellspacing="0" style="border: 1px solid;">
             <tbody>
                 <tr>
-                    <td width="640px">CONTATO: jorge.sigmametais@gmail.com</td>
+                    <td width="640px">CONTATO: {{user.email}}</td>
                     <td width="640px">RELATÓRIO(S) REFERENTE(S) AO(S) SERVIÇO(S) OU ENSAIO(S):</td>
                 </tr>
             </tbody>
@@ -125,35 +125,30 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td width="110px" class="cel_centro">01</td>
-                    <td width="640px" class="cel_centro">Fluorescência de raios-x (FRX): Semi-quantitativa</td>
-                    <td width="110px" class="cel_centro">8</td>
-                    <td width="130px" class="cel_centro">R$ 193,00</td>
-                    <td width="120px" class="cel_centro">R$ 1.544,00</td>
-                </tr>
-                <tr>
-                    <td width="110px" class="cel_centro">02</td>
-                    <td width="640px" class="cel_centro">Preparação de Amostras</td>
-                    <td width="110px" class="cel_centro">8</td>
-                    <td width="130px" class="cel_centro">R$ 100,00</td>
-                    <td width="120px" class="cel_centro">R$ 800,00</td>
-                </tr>
+                @each(res in relatorio)
+                    <tr>
+                        <td width="110px" class="cel_centro">0{{$loop.index+1}}</td>
+                        <td width="640px" class="cel_centro">{{res.desc}} <br/> {{res.list}}</td>
+                        <td width="110px" class="cel_centro">{{res.qtd}}</td>
+                        <td width="130px" class="cel_centro">R$ {{formatMoney(res.preco)}}</td>
+                        <td width="120px" class="cel_centro">R$ {{formatMoney(res.total)}}</td>
+                    </tr>
+                @endeach
             </tbody>
             <tfoot>
                 <tr>
                     <td style="text-align:right;vertical-align:middle;" width="1000px"><b>TOTAL</b></td>
-                    <td class="cel_centro" width="122px"><b>R$2.344,00</b></td>
+                    <td class="cel_centro" width="122px"><b>R${{formatMoney(valor_total) }}</b></td>
                 </tr>
             </tfoot>
         </table>
-        </br>
+        <br />
         <div class="text">04. RECONHECIMENTO DO TEOR DO DOCUMENTO PELO SOLICITANTE</div>
         <div class="text">&nbsp;&nbsp;&nbsp;&nbsp;Declaro que as informações dos itens 01 a 03 são verdadeiras, e estou ciente do valor a ser cobrado.
             <br/> &nbsp;&nbsp;&nbsp;&nbsp;Reconheço os valores expostos neste documento e encaminharei a Nota Fiscal, boleto ou outro, para o setor competente para pagamento.
             <br/> &nbsp;&nbsp;&nbsp;&nbsp;Caso o SOLICITANTE efetue o pagamento e por motivo de força maior o Laboratório de Raios-X da UFC, não conclua o(s) serviço(s), o valor cobrado será reembolsado de forma integral. Caso o(s) serviço(s) seja realizado de forma parcial será descontado o valor correspondentes ao(s) serviço(s) concluído, e a diferença reembolsada.</div>
         <div style="border: 1px solid; height: 120px; width: inherit;">
-            <div style="margin:0px;"><span>Funcionário do Laboratório</span></div>
+            <div style="margin:0px;"><span>{{data.observacoesProposta}}</span></div>
             <div style="float:right; margin:-9px;">
                 <div style="padding-right:80px;"><img src="http://www.raiosx.ufc.br/empresa/images/sasaki-assinatura.jpg" width="130" height="55" />
                     <br/><span class="text">Assinatura e Carimbo</span>
