@@ -207,7 +207,7 @@ class UserController {
 		//get data
 		let academy,academyCreate,id,linkConfirm,linkNoConfirm,buff,buff2,linkBond, email_responsable, user, userAddress;
 		const data = request.only(['name','email', 'password', 'access_level_slug', 'cpf', 'birthday', 'sex', 'state', 'city', 'phone1']);
-		const {other_email=null, phone2=null} =request.all();
+		const {other_email=null, phone2=null, password_confirm=null} =request.all();
 		const access = ['aluno', 'professor', 'empresa', 'operador', 'autonomo'];
 			  email_responsable = Env.get('MAIL_RESPONSIBLE'); 
 		
@@ -225,11 +225,18 @@ class UserController {
 	      phone1:'required'
 	    }
 
-	    //Validation
+		//Validation
 	    let validation = await validate(data, rules);
 	    if (validation.fails()) {
 	    	return response.status(200).json({...validation.messages()[0], error:true});
 	    }
+
+		//Check Senhas
+		if (password_confirm == null) {
+			return response.status(200).json({message:"Campo confirmar senha vazio", error:true});
+		}else if (password_confirm != data.password) {
+			return response.status(200).json({message:"As senhas não correspondem", error:true});			
+		}
 
 	    //Switch
 	    switch(data.access_level_slug){
