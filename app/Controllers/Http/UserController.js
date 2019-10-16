@@ -277,7 +277,7 @@ class UserController {
 				     //confirm register in email
 				    buff = new Buffer(data.email); 
 				    linkConfirm =  `${Env.get('APP_URL')}/api/user/confirm?email=${buff.toString('base64')}`;
-				    await Mail.send('emails.confirmEmail', {...data, linkConfirm}, (message) => {
+				    Mail.send('emails.confirmEmail', {...data, linkConfirm}, (message) => {
 			          message
 			              .to(data.email)
 			              .from('<from-email>')
@@ -288,7 +288,7 @@ class UserController {
 				    let {email_leader} = request.all(); 
 				    buff2 = new Buffer(email_leader);
 				    linkBond = `${Env.get('APP_URL')}/api/user/confirm-bond?email=${buff.toString('base64')}&&email_leader=${buff2.toString('base64')}`
-				    await Mail.send('emails.professorConfirmStudant', {linkBond, email_leader, email:data.email, name:data.name}, (message) => {
+				    Mail.send('emails.professorConfirmStudant', {linkBond, email_leader, email:data.email, name:data.name}, (message) => {
 			          message
 			              .to(email_leader)
 			              .from('<from-email>')
@@ -329,7 +329,7 @@ class UserController {
 				     //confirm register in email
 				    buff = new Buffer(data.email); 
 				    linkConfirm =  `${Env.get('APP_URL')}/api/user/confirm?email=${buff.toString('base64')}`;
-				    await Mail.send('emails.confirmEmail', {...data, linkConfirm}, (message) => {
+				    Mail.send('emails.confirmEmail', {...data, linkConfirm}, (message) => {
 			          message
 			              .to(data.email)
 			              .from('<from-email>')
@@ -339,7 +339,7 @@ class UserController {
 				    //Sasaki confirm professor
 				   	linkConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=true`;
 				    linkNoConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=false`;
-				    await Mail.send('emails.professorConfirm', {linkConfirm,linkNoConfirm, email:data.email, name:data.name, ...academy}, (message) => {
+				    Mail.send('emails.professorConfirm', {linkConfirm,linkNoConfirm, email:data.email, name:data.name, ...academy}, (message) => {
 			          message
 			              .to(email_responsable)
 			              .from('<from-email>')
@@ -397,7 +397,7 @@ class UserController {
 				//confirm register in email
 				buff = new Buffer(data.email); 
 				linkConfirm =  `${Env.get('APP_URL')}/api/user/confirm?email=${buff.toString('base64')}`;
-				await Mail.send('emails.confirmEmail', {...data, linkConfirm}, (message) => {
+				Mail.send('emails.confirmEmail', {...data, linkConfirm}, (message) => {
 				message
 					.to(data.email)
 					.from('<from-email>')
@@ -407,7 +407,7 @@ class UserController {
 				//Sasaki confirm professor
 				linkConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=true`;
 				linkNoConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=false`;
-				await Mail.send('emails.companyConfirm', {linkConfirm,linkNoConfirm, company,...data}, (message) => {
+				Mail.send('emails.companyConfirm', {linkConfirm,linkNoConfirm, company,...data}, (message) => {
 					message
 						.to(email_responsable)
 						.from('<from-email>')
@@ -441,7 +441,7 @@ class UserController {
 				//confirm register in email
 				buff = new Buffer(data.email); 
 				linkConfirm =  `${Env.get('APP_URL')}/api/user/confirm?email=${buff.toString('base64')}`;
-				await Mail.send('emails.confirmEmail', {...data, linkConfirm}, (message) => {
+				Mail.send('emails.confirmEmail', {...data, linkConfirm}, (message) => {
 				message
 					.to(data.email)
 					.from('<from-email>')
@@ -451,7 +451,7 @@ class UserController {
 				//Sasaki confirm professor
 				linkConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=true`;
 				linkNoConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=false`;
-				await Mail.send('emails.operatorConfirm', {linkConfirm,linkNoConfirm, ...data}, (message) => {
+				Mail.send('emails.operatorConfirm', {linkConfirm,linkNoConfirm, ...data}, (message) => {
 					message
 						.to(email_responsable)
 						.from('<from-email>')
@@ -485,7 +485,7 @@ class UserController {
 				//confirm register in email
 				buff = new Buffer(data.email); 
 				linkConfirm =  `${Env.get('APP_URL')}/api/user/confirm?email=${buff.toString('base64')}`;
-				await Mail.send('emails.confirmEmail', {...data, linkConfirm}, (message) => {
+				Mail.send('emails.confirmEmail', {...data, linkConfirm}, (message) => {
 				message
 					.to(data.email)
 					.from('<from-email>')
@@ -495,7 +495,7 @@ class UserController {
 				//Sasaki confirm professor
 				linkConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=true`;
 				linkNoConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=false`;
-				await Mail.send('emails.freelanceConfirm', {linkConfirm,linkNoConfirm, ...data}, (message) => {
+				Mail.send('emails.freelanceConfirm', {linkConfirm,linkNoConfirm, ...data}, (message) => {
 					message
 						.to(email_responsable)
 						.from('<from-email>')
@@ -684,7 +684,7 @@ class UserController {
     	
     	if (confirm == "true") {
     		await User.query().where('email', email).update({confirm:1, status:1});
-    		await Mail.send('emails.accessReleased', {email}, (message) => {
+    		Mail.send('emails.accessReleased', {email}, (message) => {
 	          message
 	              .to(email)
 	              .from('<from-email>')
@@ -693,7 +693,7 @@ class UserController {
     		return view.render('message', {message:"Liberação efetuada com sucesso", error:false});
     	}else{
     		await User.query().where('email', email).update({confirm:0});
-    		await Mail.send('emails.accessDenied', {email}, (message) => {
+    		Mail.send('emails.accessDenied', {email}, (message) => {
 	          message
 	              .to(email)
 	              .from('<from-email>')
@@ -733,7 +733,7 @@ class UserController {
     	await User.query().where('id', studant.id).update({confirm:1, status:1});
 
     	//Enviar email avisando do seu cadastro
-    	await Mail.send('emails.accessReleased', {email}, (message) => {
+    	Mail.send('emails.accessReleased', {email}, (message) => {
           message
               .to(email)
               .from('<from-email>')
@@ -762,7 +762,7 @@ class UserController {
         const key   = await Hash.make(`${email}-${Math.random()*10000}`);
         const link = `${Env.get('LINK_SET_NEW_PASS')}?token=${key}`;
 
-        await Mail.send('emails.requestNewpass', {...user, link}, (message) => {
+        Mail.send('emails.requestNewpass', {...user, link}, (message) => {
             message
                 .to(email)
                 .from('<from-email>')

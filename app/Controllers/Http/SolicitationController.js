@@ -11,6 +11,15 @@ const dateformat    = use('dateformat');
 const Env           = use('Env');
 const { validate }  = use('Validator');
 
+//Functions Helpers
+const {
+  formatMoney, 
+  formatDate, 
+  doc_number,
+  date_diff,
+  conv
+} = use('App/Helpers');
+
 /** @typedef {import('@adonisjs/framework/src/Request')} Request */
 /** @typedef {import('@adonisjs/framework/src/Response')} Response */
 /** @typedef {import('@adonisjs/framework/src/View')} View */
@@ -1187,49 +1196,17 @@ class SolicitationController {
       return response.status(200).json({message:"Usuário não pode redecer proposta.", error:true})
     }
 
-    //Formatc money
-    const formatMoney = (numero) => {
-      numero = parseFloat(numero);
-      numero = numero.toFixed(2).split('.');
-      numero[0] = numero[0].split(/(?=(?:...)*$)/).join('.');
-      return numero.join(',');
-    }
 
     //Diff Between dates
-
-    const date1     = new Date();
-    const date2     = new Date(data.dataPrazo);
-    const timeDiff  = Math.abs(date2.getTime() - date1.getTime());
-    const diffDays  = Math.ceil(timeDiff / (1000 * 3600 * 24));
-    
-    let numDoc    = parseInt(Math.random()*10);
-        numDoc    = "000"+numDoc;
-
-    function formatDate(date) {
-      var monthNames = [
-        "Janeiro", "Fevereiro", "Março",
-        "Abril", "Maio", "Junho", "Julho",
-        "Agosto", "Setembro", "Outubro",
-        "Novembro", "Dezembro"
-      ];
-    
-      var day = date.getDate();
-      var monthIndex = date.getMonth();
-      var year = date.getFullYear();
-    
-      return day + ' de ' + monthNames[monthIndex] + ' de ' + year;
-    }
-
-    //Salvar link em bd
-    // const url = request.all().data;
-    // await Document.create({user_id, url, type:'proposta'})
-
-
-
+    const diffDays = date_diff(data.dataPrazo);
+    const numDoc    = await doc_number(user_id);
+ 
     return view.render('propostas', {data, full, list, valor_total, formatMoney, array_frx, array_drx, diffDays, date:formatDate(new Date), numDoc});
   }
 
-
+  /* 
+  * Função para gerar o documento de ordem de serviços
+  */
   async ordem ({request, response, auth, view}) {
     let {data} = request.all();
     let array_drx = [], array_frx = [], referencia, start, end, res, valor_total, checkQtdPre;
@@ -1385,33 +1362,10 @@ class SolicitationController {
       return response.status(200).json({message:"Usuário não pode redecer proposta.", error:true})
     }
 
-    //Formatc money
-    const formatMoney = (numero) => {
-      numero = parseFloat(numero);
-      numero = numero.toFixed(2).split('.');
-      numero[0] = numero[0].split(/(?=(?:...)*$)/).join('.');
-      return numero.join(',');
-    }
 
-    //Diff Between dates
-    let numDoc    = parseInt(Math.random()*10);
-        numDoc    = "000"+numDoc;
+    //dar o número do documento
+    let numDoc    = await doc_number(user_id);
 
-    function formatDate(date) {
-      var monthNames = [
-        "Janeiro", "Fevereiro", "Março",
-        "Abril", "Maio", "Junho", "Julho",
-        "Agosto", "Setembro", "Outubro",
-        "Novembro", "Dezembro"
-      ];
-    
-      var day = date.getDate();
-      var monthIndex = date.getMonth();
-      var year = date.getFullYear();
-    
-      return day + ' de ' + monthNames[monthIndex] + ' de ' + year;
-    }
-    
     //Array dos serviços
     let relatorio = [];
 

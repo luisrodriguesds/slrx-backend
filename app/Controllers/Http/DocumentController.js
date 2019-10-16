@@ -2,8 +2,9 @@
 
 const Document 	= use('App/Models/Document')
 const User 		= use('App/Models/User')
-const Company 		= use('App/Models/CompanyDatum');
-
+const Company 	= use('App/Models/CompanyDatum');
+const Mail 		= use('Mail');
+const Env		= use('Env');
 class DocumentController {
   
   async index_proposta ({request, response, auth}) {
@@ -32,14 +33,33 @@ class DocumentController {
   	const {user_id, url} = request.all();
   	
   	//Selecionar user
-  	
+	const user = await User.findBy('id', user_id);
+
+	
   	//Enviar email para user
+	  Mail.send('emails.sendProposta', {user, url:`${Env.get('APP_URL')}/api/solictation/proposta?data=${url}`}, (message) => {
+		message
+			.to(user.email)
+			.from('<from-email>')
+			.subject('SLRX - UFC | Proposta LRX')
+	});
 
   	//Gravar no banco
-  	const res = await Document.create({user_id, url, type:'proposta'});
+  	const res = await Document.create({user_id, type:'proposta'});
 
   	//Returno to page
   	return response.status(200).json({message:"Proposta enviada com sucesso!", error:false});
+  }
+
+  async delete_proposta({request, response, auth}){
+	  const {id} = request.all();
+
+	  if (auth.user.access_level_slug != 'administrador') {
+		  return response.status(200).json({message:"Usuário não autorizado!", error:true});
+	  }
+
+	  await Document.query().where('id', id).delete();
+	  return response.status(200).json({message:"Proposta deletada com sucesso!", error:false});
   }
 
 }

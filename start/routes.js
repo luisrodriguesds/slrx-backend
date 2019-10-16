@@ -81,8 +81,8 @@ Route.group(() => {
 Route.group(() => {
 	Route.post('/api/documents/proposta', 'DocumentController.store_proposta').middleware(['auth']);
 	Route.get('/api/documents/proposta', 'DocumentController.index_proposta').middleware(['auth']);
+	Route.delete('/api/documents/proposta', 'DocumentController.delete_proposta').middleware(['auth']);
 
-	Route.post('/api/documents/ordem', 'DocumentController.store_ordem').middleware(['auth']);
 });
 
 //Gaps
