@@ -27,7 +27,7 @@ class ProfessorsStudentController {
   async show({request, response, auth}){
     const {studant_id=null, professor_id=null} = request.all();
     let studant;
-    if (professor_id == 'null') {
+    if (professor_id == 'null' || professor_id == null) {
       studant = await ProfStudent.findBy('studant_id', studant_id);
       if (studant == null) {
         return response.status(200).json([]);

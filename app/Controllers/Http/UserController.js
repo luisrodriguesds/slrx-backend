@@ -519,7 +519,7 @@ class UserController {
 	async update({request, response, auth}){
 		//get data
 		let academy, check, buff2, buff;
-		const data = request.only(['name','email','birthday','sex','other_email','state','city','phone1', 'phone2'])
+		let data = request.only(['name','email','birthday','sex','other_email','state','city','phone1', 'phone2'])
 		const {other_email=null, phone2=null, user_id=null, access_level_slug=null} =request.all();
 		const access = ['aluno', 'professor', 'financeiro', 'tecnico', 'operador', 'autonomo', 'administrador'];
 		
@@ -574,7 +574,6 @@ class UserController {
 			    	return response.status(200).json({...validation.messages()[0], error:true});
 				}
 
-				await User.query().where('id', user_id).update({...data, other_email, phone2});
 				check = await Academy.findBy('user_id', user_id);
 				if (check == null) {
 					await Academy.create({...academy, user_id});
@@ -617,11 +616,21 @@ class UserController {
 								.subject('SLRX - UFC | Confirmação de Vínculo')
 							});
 
-							console.log(email_leader);
+							// console.log(email_leader);
 							//retornar
 						}
 					}
+					//Parmissão DRX e FRX, limit, confirm adn confirm email - adm and oper
+					data.confirm 		= request.input('confirm');
+					data.confirm_email 	= request.input('confirm_email');
+					data.drx_permission = request.input('drx_permission');
+					data.frx_permission = request.input('frx_permission');
+					data.limit 			= request.input('limit');
+					data.status 		= request.input('status');
+					// console.log(data);
 				}
+
+				await User.query().where('id', user_id).update({...data, other_email, phone2});
 
 				return response.status(200).json({message:"Dados alterados com sucesso!", error:false});				
 			break;
@@ -859,7 +868,32 @@ class UserController {
         await user.save();
     
         return response.status(200).json({"message":"Senha alterada com suecsso!", error:false});
-    }
+	}
+	
+    async delete({ request, auth, response }) {
+		const {id} = request.all();
+		if (auth.user.access_level_slug != 'administrador' && auth.user.access_level_slug != 'operador') {
+			return response.status(200).json({message:"Usuário não autorizado", error:true});			
+		}
+		await User.query().where('id', id).update({status:0});
+		await ProfStudent.query().where('studant_id', id).update({status:0});	
+		//Desativar todos os alunos	
+		return response.status(200).json({message:"Usuário desativado com sucesso", error:false});
+	}
+
+    async delete_all({ request, auth, response }) {
+		const {array} = request.all();
+		if (auth.user.access_level_slug != 'administrador' && auth.user.access_level_slug != 'operador') {
+			return response.status(200).json({message:"Usuário não autorizado", error:true});			
+		}
+		// const sol = await Promise.all(array.map(async id => {
+		await Promise.all(array.map(async id => {
+			await User.query().where('id', id).update({status:0});
+			await ProfStudent.query().where('studant_id', id).orWhere('professor_id', id).update({status:0});	
+		}))
+		return response.status(200).json({message:"Usuário desativado com sucesso", error:false});
+
+	}
 }
 
 module.exports = UserController

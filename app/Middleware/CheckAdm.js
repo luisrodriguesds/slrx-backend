@@ -13,7 +13,7 @@ class CheckAdm {
   async wsHandle ({ request, auth, response }, next) {
     // call next to advance the request
     if (auth.user.access_level_slug != 'administrador' || auth.user.access_level_slug != 'operador') {
-    	return response.status(406).json({message:"Usuário não autorizado.", error: true});
+    	return response.status(200).json({message:"Usuário não autorizado.", error: true});
     }
     
     await next()
