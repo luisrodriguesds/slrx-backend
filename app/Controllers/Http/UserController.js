@@ -17,7 +17,7 @@ const {
 class UserController {
 
 	async index({request, auth}){
-    	const {page=1, perPage=10} = request.all();
+    	const {page=1, perPage=50} = request.all();
 		let user;
 		switch(auth.user.access_level_slug){
 			case "operador":
@@ -198,7 +198,7 @@ class UserController {
 				users = await User.query().where('access_level_slug', '=', 'financeiro').orWhere('access_level_slug', '=', 'tecnico').orderBy('created_at', 'desc').paginate(page, perPage);
 			break;
 			case "Usuários Pendentes":
-				users = await User.query().where('status', '=', '0').orderBy('created_at', 'desc').paginate(page, perPage);
+				users = await User.query().where('status', '=', '0').orWhere('confirm', '=', '0').orWhere('confirm_email', '=','0').orderBy('created_at', 'desc').paginate(page, perPage);
 			break;
 		}
 
@@ -698,6 +698,11 @@ class UserController {
 	async updateby_adm({request, response, auth}){
 		const data = request.all();
 		return data;	
+	}
+
+	async users_pending({request, response, auth}){
+
+		return ;
 	}
 
 	async confirm({request, response, view}){
