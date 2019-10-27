@@ -26,7 +26,21 @@ class UserController {
 		        return user;
 			break;
 			case "professor":
+				let professor = await ProfStudent.query().where('professor_id', auth.user.id).fetch();
+				professor =  conv(professor);
+				if (professor.length == 0) {
+					return response.status(200).json([]);
+				}
 
+				let studant_id = []
+				for (let i = 0; i < professor.length; i++) {
+					studant_id.push(professor[i].studant_id);
+				}
+
+				studant_id = studant_id.join(',');
+
+				let studant = await User.query().whereRaw(`id IN (${studant_id})`).orderBy('created_at', 'desc').paginate(page, perPage);
+				return studant;
 			break;
 		}
 	}
@@ -88,7 +102,12 @@ class UserController {
 				}
 			break;
 			case "professor":
-
+				user = await User.findBy('id', id);
+				await user.load('address');
+				await user.load('academic');
+				await user.load('company');
+				await user.load('solicitations');
+				return user;
 			break;
 		}
 	}

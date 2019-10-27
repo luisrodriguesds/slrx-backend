@@ -53,6 +53,7 @@ class GlobalSeeder {
     /*8*/{ name: 'Todas as Solicitações', url: '/solicitacoes', section:'Solicitações', icon:'fas fa-location-arrow', created_at:datenow, updated_at:datenow},
     /*9*/{ name: 'Cadastrar Solicitação', url: '/solicitacoes/cadastro', section:'Solicitações', icon:'fas fa-location-arrow', created_at:datenow, updated_at:datenow},
     /*10*/{ name: 'Tutoriais', url: '/solicitacoes/tutoriais', section:'Solicitações', icon:'fas fa-location-arrow', created_at:datenow, updated_at:datenow},
+    /*11*/{ name: 'Meus Alunos', url: '/meus-alunos', section:'Alunos', icon:'far fa-user', created_at:datenow, updated_at:datenow},
     ]);
 
      // Access Level
@@ -133,6 +134,9 @@ class GlobalSeeder {
       { menu_id: 10, access_id: 6, created_at:datenow, updated_at:datenow},
       { menu_id: 10, access_id: 7, created_at:datenow, updated_at:datenow},
       
+      //Meus Alunos
+      { menu_id: 11, access_id: 2, created_at:datenow, updated_at:datenow},
+
 
       ]);
 
