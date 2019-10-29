@@ -39,6 +39,7 @@ class ProfessorsStudentController {
       return response.status(200).json({...JSON.parse(JSON.stringify(professor)), error:false});
       
     }else{
+      //Procurar os alunos desse professor. Melhor algoritmo para isso
       let professor = await ProfStudent.query().where('professor_id', professor_id).andWhere('status', 1).fetch();
       professor =  JSON.parse(JSON.stringify(professor));
       if (professor.length == 0) {

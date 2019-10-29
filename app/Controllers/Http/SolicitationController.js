@@ -414,7 +414,9 @@ class SolicitationController {
                 name:'s.name',
                 method:'s.method',
                 status:'s.status',
+                download:'s.download',
                 created_at:'s.created_at',
+                updated_at:'s.updated_at',
               }).whereRaw(`ps.professor_id = '${auth.user.id}' AND ps.studant_id = u.id AND s.user_id IN (u.id, '${auth.user.id}') AND s.equipment_id = e.id`)
               .groupBy('s.name')
               .having('s.name', '<=', 2)

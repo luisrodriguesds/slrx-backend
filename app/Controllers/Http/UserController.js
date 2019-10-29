@@ -27,6 +27,7 @@ class UserController {
 		        return user;
 			break;
 			case "professor":
+				//Procurar os alunos desse professor. Melhor algoritmo para isso
 				let professor = await ProfStudent.query().where('professor_id', auth.user.id).andWhere('status', 1).fetch();
 				professor =  conv(professor);
 				if (professor.length == 0) {
@@ -192,7 +193,22 @@ class UserController {
 		        return user;
 			break;
 			case "professor":
+				//Procurar os alunos desse professor. Melhor algoritmo para isso
+				let professor = await ProfStudent.query().where('professor_id', auth.user.id).andWhere('status', 1).fetch();
+				professor =  conv(professor);
+				if (professor.length == 0) {
+					return response.status(200).json([]);
+				}
 
+				let studant_id = []
+				for (let i = 0; i < professor.length; i++) {
+					studant_id.push(professor[i].studant_id);
+				}
+
+				studant_id = studant_id.join(',');
+
+				let studant = await User.query().whereRaw(`id IN (${studant_id}) AND name LIKE '%${filter}%'`).orderBy('created_at', 'desc').paginate(page, perPage);
+				return studant;
 			break;
 		}
 
