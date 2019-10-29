@@ -17,7 +17,8 @@ const {
   formatDate, 
   doc_number,
   date_diff,
-  conv
+  conv,
+  getRandom
 } = use('App/Helpers');
 
 /** @typedef {import('@adonisjs/framework/src/Request')} Request */
@@ -1434,6 +1435,38 @@ class SolicitationController {
 
     return view.render('ordem', {data, full, valor_total, user, relatorio, formatMoney,  date:formatDate(new Date()), numDoc});
   }
+
+
+  //Head of dashboard
+  async head_dash({request, auth}) {
+
+    try {
+      await auth.check()
+    } catch (error) {
+      console.log(error);
+    }
+
+    const {page=1, perPage=10} = request.all();
+    let users, drx, frx, online;
+    let data = [];
+    if (auth.user.access_level_slug == 'administrador') {
+      users = await User.query().where('status', 1).paginate(page, perPage);
+      drx   = await Solicitation.query().where('method', 'DRX').andWhere('status', '>=', 1).paginate(page, perPage);
+      frx   = await Solicitation.query().where('method', 'FRX').andWhere('status', '>=', 1).paginate(page, perPage);
+      online= getRandom(15);
+    }else{
+      users = {total:1};
+      drx   = await Solicitation.query().where('method', 'DRX').andWhere('status', '>=', 1).andWhere('user_id', auth.user.id).paginate(page, perPage);
+      frx   = await Solicitation.query().where('method', 'FRX').andWhere('status', '>=', 1).andWhere('user_id', auth.user.id).paginate(page, perPage);
+      online= getRandom(15);
+    }
+    
+    data.push({tipo:'online', count:online});
+    data.push({tipo:'users', count:conv(users).total});
+    data.push({tipo:'drx', count:conv(drx).total});
+    data.push({tipo:'frx', count:conv(frx).total});
+    return data;
+  } 
 
 }
 

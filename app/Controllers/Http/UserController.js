@@ -12,7 +12,8 @@ const { validate } 	= use('Validator');
 const Hash 			= use('Hash');
 const Database 		= use('Database')
 const {
-	conv
+	conv,
+	studants
   } = use('App/Helpers');
 class UserController {
 
@@ -26,7 +27,7 @@ class UserController {
 		        return user;
 			break;
 			case "professor":
-				let professor = await ProfStudent.query().where('professor_id', auth.user.id).fetch();
+				let professor = await ProfStudent.query().where('professor_id', auth.user.id).andWhere('status', 1).fetch();
 				professor =  conv(professor);
 				if (professor.length == 0) {
 					return response.status(200).json([]);
@@ -112,6 +113,18 @@ class UserController {
 		}
 	}
 
+	async pedding({request, response, auth}){
+		const {id} = request.all();
+		await auth.check();
+		if (auth.user.access_level_slug != 'administrador' && auth.user.access_level_slug != 'operador'  && auth.user.access_level_slug != 'professor') {
+			return response.status(200).json({message:"Usuário não autorizado", error:true});
+		}
+
+		await User.query().where('id', id).update({confirm:1, confirm_email:1, status:1});
+        return response.status(200).json({message:"Operação realizada com sucesso", error:false});
+	}
+
+	
 	async token({response, auth}){
 		try {
 			await auth.check();
@@ -185,7 +198,7 @@ class UserController {
 
   	}
 
-  	async filterby({request}){
+  	async filterby({request, auth}){
 		const {filter, page=1, perPage=50} = request.all();
 		let users;
 		switch(filter){
@@ -217,7 +230,30 @@ class UserController {
 				users = await User.query().where('access_level_slug', '=', 'financeiro').orWhere('access_level_slug', '=', 'tecnico').orderBy('created_at', 'desc').paginate(page, perPage);
 			break;
 			case "Usuários Pendentes":
-				users = await User.query().where('status', '=', '0').orWhere('confirm', '=', '0').orWhere('confirm_email', '=','0').orderBy('created_at', 'desc').paginate(page, perPage);
+				users = await User.query().where('status', '=', '0').orWhere('confirm', '=', '0').orWhere('confirm_email', '=','0').orderBy('updated_at', 'desc').paginate(page, perPage);
+			break;
+			case "pendentes":
+				if (auth.user.access_level_slug == 'professor') {
+					let studant;
+					let professor = await ProfStudent.query().where('professor_id', auth.user.id).fetch();
+					professor =  JSON.parse(JSON.stringify(professor));
+					if (professor.length == 0) {
+					return response.status(200).json([]);
+					}
+
+					let studant_id = []
+					for (let i = 0; i < professor.length; i++) {
+					studant_id.push(professor[i].studant_id);
+					}
+
+					studant_id = studant_id.join(',');
+
+					users = await User.query().whereRaw(`id IN (${studant_id}) AND confirm = 0 OR  id IN (${studant_id}) AND confirm_email = 0`).paginate(page, perPage);
+					
+					// users = await User.query().where('confirm', '=', '0').orWhere('confirm_email', '=','0').orderBy('updated_at', 'desc').paginate(page, perPage);					
+				}else{
+					users = await User.query().where('confirm', '=', '0').orWhere('confirm_email', '=','0').orderBy('updated_at', 'desc').paginate(page, perPage);
+				}
 			break;
 		}
 
@@ -896,7 +932,7 @@ class UserController {
 	
     async delete({ request, auth, response }) {
 		const {id} = request.all();
-		if (auth.user.access_level_slug != 'administrador' && auth.user.access_level_slug != 'operador') {
+		if (auth.user.access_level_slug != 'administrador' && auth.user.access_level_slug != 'operador' && auth.user.access_level_slug != 'professor') {
 			return response.status(200).json({message:"Usuário não autorizado", error:true});			
 		}
 		await User.query().where('id', id).update({status:0});
@@ -907,7 +943,7 @@ class UserController {
 
     async delete_all({ request, auth, response }) {
 		const {array} = request.all();
-		if (auth.user.access_level_slug != 'administrador' && auth.user.access_level_slug != 'operador') {
+		if (auth.user.access_level_slug != 'administrador' && auth.user.access_level_slug != 'operador' && auth.user.access_level_slug != 'professor') {
 			return response.status(200).json({message:"Usuário não autorizado", error:true});			
 		}
 		// const sol = await Promise.all(array.map(async id => {

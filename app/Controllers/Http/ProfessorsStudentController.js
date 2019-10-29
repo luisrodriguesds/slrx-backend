@@ -39,7 +39,7 @@ class ProfessorsStudentController {
       return response.status(200).json({...JSON.parse(JSON.stringify(professor)), error:false});
       
     }else{
-      let professor = await ProfStudent.query().where('professor_id', professor_id).fetch();
+      let professor = await ProfStudent.query().where('professor_id', professor_id).andWhere('status', 1).fetch();
       professor =  JSON.parse(JSON.stringify(professor));
       if (professor.length == 0) {
         return response.status(200).json([]);

@@ -5,6 +5,10 @@ const User 		= use('App/Models/User')
 const Company 	= use('App/Models/CompanyDatum');
 const Mail 		= use('Mail');
 const Env		= use('Env');
+
+const {
+	conv
+  } = use('App/Helpers');
 class DocumentController {
   
   async index_proposta ({request, response, auth}) {
@@ -60,6 +64,29 @@ class DocumentController {
 
 	  await Document.query().where('id', id).delete();
 	  return response.status(200).json({message:"Proposta deletada com sucesso!", error:false});
+  }
+
+  async email({request, response, auth}){
+	  const data = request.only(['message', 'subject', 'to']);
+
+	  if (auth.user.access_level_slug != 'administrador' && auth.user.access_level_slug != 'operador') {
+		return response.status(200).json({message:"Usuário não autorizado!", error:true});
+	  }
+
+	  const users = await User.query().whereRaw(`access_level_slug IN ('${data.to.join(',')}') AND status = 1 AND confirm = 1 AND confirm_email = 1 AND id != 1`).fetch();
+
+	  conv(users).map((user,i) => {
+		  console.log(user.email, user.id)
+		  Mail.send('emails.sendEmail', {...data}, (message) => {
+			message
+				.to(user.email)
+				.from('<from-email>')
+				.subject(`SLRX - UFC | ${data.subject}`)
+			});
+		})
+
+	return response.status(200).json({message:"Emails enviados com sucesso!", error:false});
+	  
   }
 
 }

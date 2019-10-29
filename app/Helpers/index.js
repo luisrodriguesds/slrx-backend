@@ -29,6 +29,10 @@ const str_random = async (length = 40) => {
   return string
 }
 
+const getRandom = (max) => {
+  return Math.floor(Math.random() * max + 1)
+}
+
 //Formatc money
 const formatMoney = (numero) => {
   numero = parseFloat(numero);
@@ -91,11 +95,32 @@ const conv = (obj) => {
   return JSON.parse(JSON.stringify(obj))
 }
 
+const studants = async (professor_id) =>{
+    let studant;
+    let professor = await ProfStudent.query().where('professor_id', professor_id).andWhere('status', 1).fetch();
+    professor =  JSON.parse(JSON.stringify(professor));
+    if (professor.length == 0) {
+      return response.status(200).json([]);
+    }
+
+    let studant_id = []
+    for (let i = 0; i < professor.length; i++) {
+      studant_id.push(professor[i].studant_id);
+    }
+
+    studant_id = studant_id.join(',');
+
+    studant = await User.query().whereRaw(`id IN (${studant_id})`).fetch();
+    return studant;
+}
+
 module.exports = {
   str_random, 
   formatMoney,
   formatDate,
   doc_number,
   conv,
-  date_diff
+  date_diff,
+  getRandom,
+  studants
 }

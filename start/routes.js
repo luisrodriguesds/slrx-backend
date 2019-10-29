@@ -44,12 +44,20 @@ Route.group(() => {
 	Route.put('/api/user/change-pass', 'UserController.change_pass').middleware(['auth']);
 	  
   	Route.delete('/api/user/delete', 'UserController.delete').middleware(['auth']);
-  	Route.delete('/api/user/delete-all', 'UserController.delete_all').middleware(['auth']);
+	Route.delete('/api/user/delete-all', 'UserController.delete_all').middleware(['auth']);
+	  
+	Route.post('/api/user/pedding', 'UserController.pedding');
+
 });
 
 //Company
 Route.group(() => {
 	Route.get('/api/company/cnpj', 'CompanyDatumController.by_cnpj');
+});
+
+//AcessLevel
+Route.group(() => {
+	Route.get('/api/access-level/index', 'AccessLevelController.index');
 });
 
 //Professor Studant
@@ -78,6 +86,10 @@ Route.group(() => {
 
 	Route.get('/api/solictation/proposta', 'SolicitationController.proposta');
 	Route.get('/api/solictation/ordem', 'SolicitationController.ordem');
+
+	//head of dashboard
+	Route.get('/api/solictation/head-dash', 'SolicitationController.head_dash');
+
 });
 
 //Documents - Proposta e ordem de serviço
@@ -96,6 +108,11 @@ Route.group(() => {
 //Equipments
 Route.group(() => {
 	Route.get('/api/equipment', 'EquipmentController.index').middleware(['auth']);
+});
+
+//Envio de email
+Route.group(() => {
+	Route.post('/api/documents/email', 'DocumentController.email').middleware(['auth']);
 });
 
 //Download do resultado

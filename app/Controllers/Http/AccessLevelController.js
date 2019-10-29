@@ -7,6 +7,8 @@
 /**
  * Resourceful controller for interacting with accesslevels
  */
+
+ const Acess = use('App/Models/AccessLevel');
 class AccessLevelController {
   /**
    * Show a list of all accesslevels.
@@ -18,6 +20,8 @@ class AccessLevelController {
    * @param {View} ctx.view
    */
   async index ({ request, response, view }) {
+    const access = await Acess.query().fetch();
+    return access;
   }
 
   /**
