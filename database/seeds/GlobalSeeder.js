@@ -105,7 +105,7 @@ class GlobalSeeder {
       { menu_id: 5, access_id: 7, created_at:datenow, updated_at:datenow},
 
       //Todos os Usuários
-      { menu_id: 7, access_id: 6, created_at:datenow, updated_at:datenow},
+      { menu_id: 6, access_id: 6, created_at:datenow, updated_at:datenow},
       { menu_id: 6, access_id: 7, created_at:datenow, updated_at:datenow},
 
       //Cadastrar Usuário

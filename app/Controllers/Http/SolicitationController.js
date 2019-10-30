@@ -252,7 +252,7 @@ class SolicitationController {
     if (data.method == 'DRX') {
       //Rules
       let rules = {
-        tecnica: 'required|in:DRX',
+        tecnica: 'required|in:DRX,drx',
         dois_theta_inicial: 'required',
         dois_theta_final:'required',
         delta_dois_theta:'required'
@@ -267,7 +267,7 @@ class SolicitationController {
     }else{
       //Rules
       let rules = {
-        tecnica: 'required|in:FRX',
+        tecnica: 'required|in:FRX,frx',
         resultado: 'required|in:oxidos,elementos',
         medida:'required|in:semi-quantitativa'
       }
@@ -385,7 +385,7 @@ class SolicitationController {
     switch (auth.user.access_level_slug) {
         case 'administrador':
         case 'operador':
-          solicitations = await Solicitation.query().with('equipment').orderByRaw('created_at DESC, name ASC').limit(100).paginate(page, perPage);
+          solicitations = await Solicitation.query().with('equipment').with('user').orderByRaw('created_at DESC, name ASC').limit(100).paginate(page, perPage);
         break;
         case 'professor':
             //Professor deve aparecer as solicitações dele e de seus alunos
@@ -405,14 +405,27 @@ class SolicitationController {
                 s:'solicitations',
                 e:'equipment'
               }).select({
-                user_id:'u.id',
                 id:'s.id',
                 user_id:'s.user_id',
+                user:'u.id',
+                user_name:'u.name',
                 equipment_id:'s.equipment_id',
                 equipment:'e.id',
                 equipment_name:'e.name',
                 name:'s.name',
                 method:'s.method',
+                settings:'s.settings',
+                composition:'s.composition',
+                shape:'s.shape',
+                flammable:'s.flammable',
+                radioactive:'s.radioactive',
+                toxic:'s.toxic',
+                corrosive:'s.corrosive',
+                hygroscopic:'s.hygroscopic',
+                note:'s.note',
+                received_date:'s.received_date',
+                solicitation_date:'s.solicitation_date',
+                conclusion_date:'s.conclusion_date',
                 status:'s.status',
                 download:'s.download',
                 created_at:'s.created_at',
@@ -431,6 +444,7 @@ class SolicitationController {
 
               for (let i = 0; i < solicitations.data.length; i++) {
                 solicitations.data[i].equipment = {name:solicitations.data[i].equipment_name};       
+                solicitations.data[i].user = {name:solicitations.data[i].user_name, id:solicitations.data[i].user_id};       
               }
             }
         break;
@@ -445,22 +459,38 @@ class SolicitationController {
                 s:'solicitations',
                 e:'equipment'
               }).select({
-                user_id:'u.id',
                 id:'s.id',
                 user_id:'s.user_id',
+                user:'u.id',
+                user_name:'u.name',
                 equipment_id:'s.equipment_id',
                 equipment:'e.id',
                 equipment_name:'e.name',
                 name:'s.name',
                 method:'s.method',
+                settings:'s.settings',
+                composition:'s.composition',
+                shape:'s.shape',
+                flammable:'s.flammable',
+                radioactive:'s.radioactive',
+                toxic:'s.toxic',
+                corrosive:'s.corrosive',
+                hygroscopic:'s.hygroscopic',
+                note:'s.note',
+                received_date:'s.received_date',
+                solicitation_date:'s.solicitation_date',
+                conclusion_date:'s.conclusion_date',
                 status:'s.status',
+                download:'s.download',
                 created_at:'s.created_at',
+                updated_at:'s.updated_at',
               }).whereRaw(`cu.company_datum_id = '${u.company[0].id}' AND cu.user_id = u.id AND s.user_id = u.id AND s.equipment_id = e.id`)
               .orderByRaw('s.created_at DESC')
               .paginate(page, perPage);
 
               for (let i = 0; i < solicitations.data.length; i++) {
                 solicitations.data[i].equipment = {name:solicitations.data[i].equipment_name};       
+                solicitations.data[i].user = {name:solicitations.data[i].user_name, id:solicitations.data[i].user_id};                       
               }
         break;
         default:
@@ -471,6 +501,7 @@ class SolicitationController {
     return solicitations;
   }
 
+  //Para exibir as amostras na página de perfil do usuário
   async filterByUser({request}){
     let {filter, user_id} = request.all();
     let solicitations;
@@ -501,30 +532,32 @@ class SolicitationController {
     }
   }
 
+  //Tipo de filtro para as amostras
   async filterby({request}){
 		const {filter, page=1, perPage=50} = request.all();
     let solicitations;
     
     switch (filter) {
       case "Abertas":
-        solicitations = await Solicitation.query().where('status', '!=', '7').with('equipment').orderBy('created_at', 'desc').paginate(page, perPage);
+        solicitations = await Solicitation.query().where('status', '!=', '7').with('equipment').with('user').orderBy('created_at', 'desc').paginate(page, perPage);
       break;
       case "DRX":
-          solicitations = await Solicitation.query().where('method', '=', 'DRX').with('equipment').orderBy('created_at', 'desc').paginate(page, perPage);        
+          solicitations = await Solicitation.query().where('method', '=', 'DRX').with('equipment').with('user').orderBy('created_at', 'desc').paginate(page, perPage);        
       break;
       case "FRX":
-          solicitations = await Solicitation.query().where('method', '=', 'FRX').with('equipment').orderBy('created_at', 'desc').paginate(page, perPage);                
+          solicitations = await Solicitation.query().where('method', '=', 'FRX').with('equipment').with('user').orderBy('created_at', 'desc').paginate(page, perPage);                
       break;
       case "Filtro":
-          solicitations = await Solicitation.query().with('equipment').orderBy('created_at', 'desc').paginate(page, perPage);                
+          solicitations = await Solicitation.query().with('equipment').with('user').orderBy('created_at', 'desc').paginate(page, perPage);                
       break;
       default:
-          solicitations = await Solicitation.query().where('status', '=', `${filter}`).with('equipment').orderBy('created_at', 'desc').paginate(page, perPage);                
+          solicitations = await Solicitation.query().where('status', '=', `${filter}`).with('equipment').with('user').orderBy('created_at', 'desc').paginate(page, perPage);                
       break;
     }
     return solicitations;
   }
 
+  //Pesquisa dinamica
   async filter ({ request, auth }) {
     const {filter=null, page=1, perPage=10} = request.all();
     let res = [], count=0;
@@ -532,12 +565,12 @@ class SolicitationController {
     switch (auth.user.access_level_slug) {
       case 'administrador':
       case 'operador':
-          res = await Solicitation.query().where('name', 'like', `%${filter}%`).with('equipment').orderByRaw('created_at DESC').limit(100).paginate(page, perPage);
+          res = await Solicitation.query().where('name', 'like', `%${filter}%`).with('equipment').with('user').orderByRaw('created_at DESC').limit(100).paginate(page, perPage);
       break;
       case 'professor':
           const hasStudant = await ProfStudent.findBy({professor_id:auth.user.id});
           if (hasStudant == null) {
-            res = await Solicitation.query().where('name', 'like', `%${filter}%`).andWhere({user_id:auth.user.id}).with('equipment').orderByRaw('created_at DESC').limit(100).paginate(page, perPage);
+            res = await Solicitation.query().where('name', 'like', `%${filter}%`).andWhere({user_id:auth.user.id}).with('equipment').with('user').orderByRaw('created_at DESC').limit(100).paginate(page, perPage);
           }else{
             //SELECT u.id, u.name, u.access_level, ps.professor_id, ps.studant_id, s.* FROM users as u, professors_students as ps, solicitations as s WHERE ps.professor_id = '2' AND studant_id = u.id AND s.user_id IN (u.id, '2');
             res = await Database.table({
@@ -546,16 +579,31 @@ class SolicitationController {
               s:'solicitations',
               e:'equipment'
             }).select({
-              user_id:'u.id',
               id:'s.id',
               user_id:'s.user_id',
+              user:'u.id',
+              user_name:'u.name',
               equipment_id:'s.equipment_id',
               equipment:'e.id',
               equipment_name:'e.name',
               name:'s.name',
               method:'s.method',
+              settings:'s.settings',
+              composition:'s.composition',
+              shape:'s.shape',
+              flammable:'s.flammable',
+              radioactive:'s.radioactive',
+              toxic:'s.toxic',
+              corrosive:'s.corrosive',
+              hygroscopic:'s.hygroscopic',
+              note:'s.note',
+              received_date:'s.received_date',
+              solicitation_date:'s.solicitation_date',
+              conclusion_date:'s.conclusion_date',
               status:'s.status',
+              download:'s.download',
               created_at:'s.created_at',
+              updated_at:'s.updated_at',
             }).whereRaw(`ps.professor_id = '${auth.user.id}' AND ps.studant_id = u.id AND s.user_id IN (u.id, '${auth.user.id}') AND s.equipment_id = e.id AND s.name LIKE '%${filter}%'`)
             .groupBy('s.name')
             .having('s.name', '<=', 2)
@@ -569,7 +617,8 @@ class SolicitationController {
             res.lastPage = Math.round(count/res.perPage);
             
             for (let i = 0; i < res.data.length; i++) {
-              res.data[i].equipment = {name:res.data[i].equipment_name};       
+              res.data[i].equipment = {name:res.data[i].equipment_name};  
+              res.data[i].user = {name:res.data[i].user_name, id:res.data[i].user_id};                       
             }
           }
       break;
@@ -584,26 +633,42 @@ class SolicitationController {
               s:'solicitations',
               e:'equipment'
             }).select({
-              user_id:'u.id',
               id:'s.id',
               user_id:'s.user_id',
+              user:'u.id',
+              user_name:'u.name',
               equipment_id:'s.equipment_id',
               equipment:'e.id',
               equipment_name:'e.name',
               name:'s.name',
               method:'s.method',
+              settings:'s.settings',
+              composition:'s.composition',
+              shape:'s.shape',
+              flammable:'s.flammable',
+              radioactive:'s.radioactive',
+              toxic:'s.toxic',
+              corrosive:'s.corrosive',
+              hygroscopic:'s.hygroscopic',
+              note:'s.note',
+              received_date:'s.received_date',
+              solicitation_date:'s.solicitation_date',
+              conclusion_date:'s.conclusion_date',
               status:'s.status',
+              download:'s.download',
               created_at:'s.created_at',
+              updated_at:'s.updated_at',
             }).whereRaw(`cu.company_datum_id = '${u.company[0].id}' AND cu.user_id = u.id AND s.user_id = u.id AND s.equipment_id = e.id AND s.name LIKE '%${filter}%'`)
             .orderByRaw('s.created_at DESC')
             .paginate(page, perPage);
 
             for (let i = 0; i < res.data.length; i++) {
-              res.data[i].equipment = {name:res.data[i].equipment_name};       
+              res.data[i].equipment = {name:res.data[i].equipment_name};   
+              res.data[i].user = {name:res.data[i].user_name, id:res.data[i].user_id};                       
             }
       break;
       default:
-          res = await Solicitation.query().where('name', 'like', `%${filter}%`).andWhere({user_id:auth.user.id}).with('equipment').orderBy('created_at', 'desc').limit(50).paginate(page, perPage);
+          res = await Solicitation.query().where('name', 'like', `%${filter}%`).andWhere({user_id:auth.user.id}).with('equipment').with('user').orderBy('created_at', 'desc').limit(50).paginate(page, perPage);
       break;
     }
 
@@ -688,7 +753,7 @@ class SolicitationController {
                 extnames: ['dat', 'json', 'png', 'jpg', 'jpeg', 'raw', 'txt', 'xrdml'],
                 size: '2mb'
               });
-
+              // console.log(sample);
               if (sample === null) {
                 return response.status(200).json({message:"Arquivo da medida é necessário para avançar para o próximo passo.", error:true});
               }
