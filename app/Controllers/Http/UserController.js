@@ -122,6 +122,7 @@ class UserController {
 		}
 
 		await User.query().where('id', id).update({confirm:1, confirm_email:1, status:1});
+		await ProfStudent.query().where('studant_id', id).update({status:1});
         return response.status(200).json({message:"Operação realizada com sucesso", error:false});
 	}
 
@@ -654,6 +655,15 @@ class UserController {
 
 				//Check if is adm end check if same field change
 				if (auth.user.access_level_slug == 'administrador' || auth.user.access_level_slug == 'operador') {
+					//Parmissão DRX e FRX, limit, confirm adn confirm email - adm and oper
+					data.confirm 		= request.input('confirm');
+					data.confirm_email 	= request.input('confirm_email');
+					data.drx_permission = request.input('drx_permission');
+					data.frx_permission = request.input('frx_permission');
+					data.limit 			= request.input('limit');
+					data.status 		= request.input('status');
+					// console.log(data);
+					
 					if (access_level_slug == 'aluno') {
 						const {email_leader=null} = request.all();
 						let prof = await User.query().where('email', email_leader).andWhere('access_level_slug', 'professor').fetch();
@@ -675,7 +685,7 @@ class UserController {
 							profStudent.delete();
 							//add registro com o novo professor, mas status 0 e o status do estudante volta pro 0
 							await ProfStudent.create({professor_id:prof[0].id, studant_id:user_id, status:0});
-							await User.query().where('id', user_id).update({status:0});
+							await User.query().where('id', user_id).update({status:0, confirm:0, confirm_email:0});
 							//enviar email pro novo professor com o novo aluno
 							buff  = new Buffer(data.email);
 							buff2 = new Buffer(email_leader);
@@ -687,18 +697,13 @@ class UserController {
 								.subject('SLRX - UFC | Confirmação de Vínculo')
 							});
 
-							// console.log(email_leader);
-							//retornar
+							data.confirm 		= 0;
+							data.confirm_email 	= 0;
+							data.status 		= 0;
+
 						}
 					}
-					//Parmissão DRX e FRX, limit, confirm adn confirm email - adm and oper
-					data.confirm 		= request.input('confirm');
-					data.confirm_email 	= request.input('confirm_email');
-					data.drx_permission = request.input('drx_permission');
-					data.frx_permission = request.input('frx_permission');
-					data.limit 			= request.input('limit');
-					data.status 		= request.input('status');
-					// console.log(data);
+					
 				}
 
 				await User.query().where('id', user_id).update({...data, other_email, phone2});
