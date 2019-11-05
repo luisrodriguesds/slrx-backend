@@ -75,22 +75,29 @@ class ProfessorsStudentController {
     const {email=null} = request.all();
     
     //Aluno existe
-    let profStudent = await User.findBy('email', email);
-        profStudent = await ProfStudent.query().where('studant_id', profStudent.id).andWhere('status', 0).fetch();
-    console.log(profStudent)
-        if (profStudent == null) {
+    let user = await User.findBy('email', email);
+    let profStudent = await ProfStudent.query().where('studant_id', user.id).andWhere('status', 0).fetch();
+    
+    if (conv(profStudent).length == 0) {
       return response.status(200).json({message:"Vínculo insponível", error: true});
     }
-
-    profStudent = conv(profStudent);
-
-    
-    return profStudent;
-
     //Check se mais tem ate 20 alunos
+    let studants = await ProfStudent.query().where('professor_id', auth.user.id).andWhere('status', 1).fetch( );
+        studants = conv(studants);
 
+    if (studants.length >= 20) {
+        return response.status(200).json({message:"Professor já tem 20 alunos vinculados"});
+    }
+    console.log(studants);
 
-    return auth.user;
+    //Excluir registro de profStudant do aluno
+    await ProfStudent.query().where('studant_id', user.id).delete();
+
+    //add registro com o novo professor, mas status 0 e o status do estudante volta pro 0
+    await ProfStudent.create({professor_id:auth.user.id, studant_id:user.id, status:0});
+    await User.query().where('id', user.id).update({status:0, confirm:0, confirm_email:0});
+
+    return response.status(200).json({message:"Vínculo efetuado com sucesso. Agora aprove o vínculo na sua Dashboard!", error:false});
   }
 
 

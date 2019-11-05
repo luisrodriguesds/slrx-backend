@@ -17,7 +17,7 @@ const {
   } = use('App/Helpers');
 class UserController {
 
-	async index({request, auth}){
+	async index({response,request, auth}){
     	const {page=1, perPage=50} = request.all();
 		let user;
 		switch(auth.user.access_level_slug){
@@ -31,7 +31,7 @@ class UserController {
 				let professor = await ProfStudent.query().where('professor_id', auth.user.id).andWhere('status', 1).fetch();
 				professor =  conv(professor);
 				if (professor.length == 0) {
-					return response.status(200).json([]);
+					return response.status(200).json({data:[], lastPage:'', page:1, total:0, perPage:''});
 				}
 
 				let studant_id = []
@@ -220,7 +220,7 @@ class UserController {
 
   	}
 
-  	async filterby({request, auth}){
+  	async filterby({request, response, auth}){
 		const {filter, page=1, perPage=50} = request.all();
 		let users;
 		switch(filter){
@@ -260,7 +260,7 @@ class UserController {
 					let professor = await ProfStudent.query().where('professor_id', auth.user.id).fetch();
 					professor =  JSON.parse(JSON.stringify(professor));
 					if (professor.length == 0) {
-					return response.status(200).json([]);
+					return response.status(200).json({data:[]});
 					}
 
 					let studant_id = []
