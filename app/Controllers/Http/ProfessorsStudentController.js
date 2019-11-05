@@ -6,7 +6,11 @@
 
 const User        = use('App/Models/User');
 const ProfStudent = use('App/Models/ProfessorsStudent');
-
+const { validate }  = use('Validator');
+//Functions Helpers
+const {
+  conv
+} = use('App/Helpers');
 /**
  * Resourceful controller for interacting with professorsstudents
  */
@@ -67,7 +71,26 @@ class ProfessorsStudentController {
    * @param {Request} ctx.request
    * @param {Response} ctx.response
    */
-  async store ({ request, response }) {
+  async store ({ request, response, auth }) {
+    const {email=null} = request.all();
+    
+    //Aluno existe
+    let profStudent = await User.findBy('email', email);
+        profStudent = await ProfStudent.query().where('studant_id', profStudent.id).andWhere('status', 0).fetch();
+    console.log(profStudent)
+        if (profStudent == null) {
+      return response.status(200).json({message:"Vínculo insponível", error: true});
+    }
+
+    profStudent = conv(profStudent);
+
+    
+    return profStudent;
+
+    //Check se mais tem ate 20 alunos
+
+
+    return auth.user;
   }
 
 

@@ -63,6 +63,7 @@ Route.group(() => {
 //Professor Studant
 Route.group(() => {
 	Route.get('/api/professor-studant/show', 'ProfessorsStudentController.show').middleware(['auth']);
+	Route.post('/api/professor-studant/store', 'ProfessorsStudentController.store').middleware(['auth']);
 });
 
 //Menu
