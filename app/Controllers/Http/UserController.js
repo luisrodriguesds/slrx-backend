@@ -50,6 +50,11 @@ class UserController {
 	async show({request, response, auth}){
 		let {id} = request.all();
 		let user;
+
+		if (id == 'undefined' || id == undefined) {
+			return response.status(200).json({solicitations:[]});
+		}
+
 		switch(auth.user.access_level_slug){
 			case "operador":
 			case "administrador":
