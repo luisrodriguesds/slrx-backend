@@ -559,7 +559,7 @@ class SolicitationController {
 
   //Pesquisa dinamica
   async filter ({ request, auth }) {
-    const {filter=null, page=1, perPage=10} = request.all();
+    const {filter=null, page=1, perPage=100} = request.all();
     let res = [], count=0;
 
     switch (auth.user.access_level_slug) {
