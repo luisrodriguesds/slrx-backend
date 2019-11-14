@@ -48,6 +48,9 @@ Route.group(() => {
 	  
 	Route.post('/api/user/pedding', 'UserController.pedding');
 
+	Route.post('/api/user/picture', 'UserController.picture');
+	Route.get('/api/user/picture/:path', 'UserController.show_picture');
+
 });
 
 //Company

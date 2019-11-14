@@ -3,8 +3,9 @@ node_modules
 package-lock.json
 
 # Adonis directory for storing tmp files
-tmp
-
+tmp/results/*
+tmp/pictures/*
+!tmp/pictures/avatar-1.png
 # Environment variables, never commit this file
 .env
 

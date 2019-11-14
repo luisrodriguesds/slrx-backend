@@ -5,6 +5,7 @@ const Model = use('Model')
 
 /** @type {import('@adonisjs/framework/src/Hash')} */
 const Hash = use('Hash')
+const Env  = use('Env');
 
 // Data format
 const dateformat = use('dateformat');
@@ -33,6 +34,10 @@ class User extends Model {
   }
 
   //Gettings and Settings
+  getPhoto(photo){
+    return `${Env.get('APP_URL')}/api/user/picture/${photo}`;
+  }
+
   getBirthday(birthday){
     return dateformat(birthday, "yyyy-mm-dd");
   }

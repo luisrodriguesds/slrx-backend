@@ -11,6 +11,8 @@ const Env 			= use('Env');
 const { validate } 	= use('Validator');
 const Hash 			= use('Hash');
 const Database 		= use('Database')
+const Helpers 		= use('Helpers')
+
 const {
 	conv,
 	studants
@@ -85,7 +87,7 @@ class UserController {
 		                status:'s.status',
 		                created_at:'s.created_at',
 		              }).whereRaw(`cu.company_datum_id = '${company.id}' AND cu.user_id = u.id AND s.user_id = u.id AND s.equipment_id = e.id`)
-		              .orderByRaw('s.created_at DESC')
+		              .orderByRaw('s.name ASC')
 			        
 					user = {
 						name:company.fantasy_name,
@@ -97,7 +99,6 @@ class UserController {
 						employees:company.users,
 						solicitations
 					}
-
 					return user;
 				}else{
 					user = await User.findBy('id', id);
@@ -188,6 +189,46 @@ class UserController {
 	  const token = auth.getAuthHeader()
       return await auth.revokeTokens([token]);
   	}
+
+	async picture({response,request, auth}){
+		let {id} = request.all();
+
+		console.log(id);
+		await auth.check();
+
+		if (auth.user.id != id && auth.user.access_level_slug != 'administrador') {
+			return response.status(200).json({message:"Usuário não autorizado", })
+		}
+
+		let picture = request.file('picture', {
+                extnames: ['png', 'jpg', 'jpeg', 'gif'],
+                size: '2mb'
+	      });
+
+	      // console.log(sample);
+	      if (picture === null) {
+	        return response.status(200).json({message:"Foto Obrigatória", error:true});
+	      }
+
+	      const {extname} = picture;
+	      let name = `${Date.now().toString()}.${extname}`;
+	      await picture.move(Helpers.tmpPath('pictures'), {
+	        name,
+	        overwrite: true
+	      });
+	    
+	      if (!picture.moved()) {
+	        return response.status(200).json({message:picture.error().message, error:true});
+	      }
+
+	      await User.query().where('id', id).update({photo:name});
+
+	      return response.status(200).json({message:"Foto enviada com sucesso", erro:false});
+  	}
+
+  	async show_picture({request, response, params}){
+	    return response.download(Helpers.tmpPath(`pictures/${params.path}`))
+	}
 
 	async filter({request, response, auth}){
 		const {filter, page=1, perPage=50} = request.all();
@@ -284,7 +325,7 @@ class UserController {
 
 	async create({request, response}){
 		//get data
-		let academy,academyCreate,id,linkConfirm,linkNoConfirm,buff,buff2,linkBond, email_responsable, user, userAddress;
+		let academy,academyCreate,id,linkConfirm,linkNoConfirm,buff,buff2,linkBond, email_responsable, user, userAddress,cpf;
 		const data = request.only(['name','email', 'password', 'access_level_slug', 'cpf', 'birthday', 'sex', 'state', 'city', 'phone1']);
 		const {other_email=null, phone2=null, password_confirm=null} =request.all();
 		const access = ['aluno', 'professor', 'empresa', 'operador', 'autonomo'];
@@ -315,6 +356,12 @@ class UserController {
 			return response.status(200).json({message:"Campo confirmar senha vazio", error:true});
 		}else if (password_confirm != data.password) {
 			return response.status(200).json({message:"As senhas não correspondem", error:true});			
+		}
+
+		//Check if cpf exist
+		cpf = await User.query()where('cpf', data.cpf).fetch();
+		if (conv(cpf).length > 0) {
+			return response.status(200).json({message:"Este CPF já existe em nossa base de dados", error:true});			
 		}
 
 	    //Switch
@@ -668,10 +715,10 @@ class UserController {
 					data.limit 			= request.input('limit');
 					data.status 		= request.input('status');
 					// console.log(data);
-					
+
 					if (access_level_slug == 'aluno') {
 						const {email_leader=null} = request.all();
-						let prof = await User.query().where('email', email_leader).andWhere('access_level_slug', 'professor').fetch();
+						let prof = await User.query().whereRaw(`email = ${email_leader} AND access_level_slug IN ('professor', 'administrador', 'operador')`).fetch();
 							prof = conv(prof);
 						if (prof.length == 0) {
 							return response.status(200).json({message:"Professor não encontrado"})
@@ -706,6 +753,24 @@ class UserController {
 							data.confirm_email 	= 0;
 							data.status 		= 0;
 
+						}
+					}
+
+					//Caso ative ou desative o DRX ou FRX do professor
+					if (access_level_slug == 'professor' || access_level_slug == 'administrador' || access_level_slug == 'operador') {
+						let studants_all = await ProfStudent.query().where('professor_id', user_id).fetch();
+						console.log(conv(studants_all))
+						if (conv(studants_all).length > 0) {
+							let studant_id 	= [];
+							studants_all 	= conv(studants_all);
+							for (let i = 0; i < studants_all.length; i++) {
+								studant_id.push(studants_all[i].studant_id);
+							}
+
+							studant_id = studant_id.join(',');
+							//Atualiza o DRX e FRX de todos os alunos daquele professor
+
+							await User.query().whereRaw(`id IN (${studant_id})`).update({frx_permission:data.frx_permission, drx_permission:data.drx_permission});
 						}
 					}
 					
