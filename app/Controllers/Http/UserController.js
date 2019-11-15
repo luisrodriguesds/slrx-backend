@@ -97,7 +97,8 @@ class UserController {
 						phone1:company.company_phone,
 						cnpj:company.cnpj,
 						employees:company.users,
-						solicitations
+						solicitations,
+						photo:'/assets/img/avatar/avatar-1.png'
 					}
 					return user;
 				}else{
@@ -359,7 +360,7 @@ class UserController {
 		}
 
 		//Check if cpf exist
-		cpf = await User.query()where('cpf', data.cpf).fetch();
+		cpf = await User.query().where('cpf', data.cpf).fetch();
 		if (conv(cpf).length > 0) {
 			return response.status(200).json({message:"Este CPF já existe em nossa base de dados", error:true});			
 		}
