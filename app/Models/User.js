@@ -35,7 +35,7 @@ class User extends Model {
 
   //Gettings and Settings
   getPhoto(photo){
-    return `${Env.get('APP_URL')}/api/user/picture/${photo}`;
+    return `${Env.get('APP_URL_PROD')}/api/user/picture/${photo}`;
   }
 
   getBirthday(birthday){

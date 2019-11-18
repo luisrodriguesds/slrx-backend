@@ -16,7 +16,7 @@ class Solicitation extends Model {
      }
 
      getDownload(download){
-        return `${Env.get('APP_URL')}/api/results/${download}`;
+        return `${Env.get('APP_URL_PROD')}/api/results/${download}`;
      }
 
     //Relacoes
