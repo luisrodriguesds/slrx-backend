@@ -11,3 +11,5 @@ tmp/pictures/*
 
 # The development sqlite file
 database/development.sqlite
+
+sftp-config.json

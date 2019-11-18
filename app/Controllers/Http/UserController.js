@@ -193,7 +193,7 @@ class UserController {
 	async picture({response,request, auth}){
 		let {id} = request.all();
 
-		console.log(id);
+		// console.log(id);
 		await auth.check();
 
 		if (auth.user.id != id && auth.user.access_level_slug != 'administrador') {
@@ -359,7 +359,7 @@ class UserController {
 		}
 
 		//Check if cpf exist
-		cpf = await User.query()where('cpf', data.cpf).fetch();
+		cpf = await User.query().where('cpf', data.cpf).fetch();
 		if (conv(cpf).length > 0) {
 			return response.status(200).json({message:"Este CPF já existe em nossa base de dados", error:true});			
 		}
@@ -830,7 +830,12 @@ class UserController {
 				}
 
 				await User.query().where('id', user_id).update({...data, other_email, phone2});
-				await Address.query().where('id', address_id).update({...other});
+				const checkAdd = await Address.query().where('user_id', user_id).fetch();
+				if (conv(checkAdd).length > 0) {
+					await Address.query().where('user_id', user_id).update({...other});
+				}else{
+					await Address.create({...other, user_id});
+				}
 				return response.status(200).json({message:"Dados alterados com sucesso!", error:false});				
 
 			break;
@@ -947,12 +952,17 @@ class UserController {
         const key   = await Hash.make(`${email}-${Math.random()*10000}`);
         const link = `${Env.get('LINK_SET_NEW_PASS')}?token=${key}`;
 
-        Mail.send('emails.requestNewpass', {...user, link}, (message) => {
-            message
-                .to(email)
-                .from('<from-email>')
-                .subject('SLRX - UFC | Recuperação de Senha')
-            })
+        try{
+	        Mail.send('emails.requestNewpass', {...user, link}, (message) => {
+	            message
+	                .to(email)
+	                .from('<from-email>')
+	                .subject('SLRX - UFC | Recuperação de Senha')
+	            })
+
+        }catch(e){
+			console.log(e);        	
+        }
         
         await RequestPass.create({user_id:user.id, key});
         return response.status(200).json({"message":"Um chave de acesso foi enviada para seu email. Por favor verifique sua caixa de entrada e recupere sua senha.", error:false, key});
