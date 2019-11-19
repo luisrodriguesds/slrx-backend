@@ -1,0 +1,32 @@
+<html>
+<head>
+    <title></title>
+    <style type="text/css">
+    * {margin: 0; padding: 0;}
+    body {max-width: 600px;}
+    p {margin: 20px 6.666666%; line-height: 1.5em;max-width:600px;}
+    div, div img {max-width: 100%;}
+    </style>
+</head>
+<body>
+    <div>
+        <img src="http://csd.fisica.ufc.br/solicitacoes/imagens/cabecalho_email_lrx_ufc.gif" alt="Laboratório de Raios X">
+    </div>
+    
+    <div class="main">
+        <p>Olá {{body.name}},<br> sua solicitação de análise da amostra <b> {{body.sample}}</b>  foi
+            realizado com sucesso, então agradecemos sua cooperação! Com isso, seu resultado já está disponível em nosso site.</p>
+        <p>Para visualizá-lo acesse o <a href="{{body.link}}" target="_blank">Sistema de Solicitação de Análises de Raios-X</a>.<br>
+            Vá na aba <b>Concluídas</b>, procure pela amostra com identificação <b>${solicitation.name}</b>. Ao clicar nela
+            será exibida uma janela do lado direito contendo as informações da amostra. Nesta janela basta mover a barra para baixo, e então será possível
+            visualizar um <b>botão de download</b>, que ao clicar, o download do resultado será efetuado!<br>
+            O LRX agradece sua preferência pelos nosssos serviços! Estaremos sempre a disposição!</p>
+            <p>Caso possua alguma dúvida, por favor entre em contato com o Laboratório 
+            por meio do endereço de email lrxufc@gmail.com, ou pelo telefone 85 33669013.</p>
+            <p style="text-align:right;">Atenciosamente,<br>Laboratório de Raios-X</p>
+    </div>
+    <div>
+        <img src="http://csd.fisica.ufc.br/solicitacoes/imagens/rodape_email.gif" alt="Bloco 928, sala 34 - Campus do Pici">
+    </div>
+</body>
+</html>

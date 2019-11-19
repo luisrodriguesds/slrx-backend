@@ -1,0 +1,28 @@
+<html>
+<head>
+    <title></title>
+    <style type="text/css">
+    * {margin: 0; padding: 0;}
+    body {max-width: 600px;}
+    p {margin: 20px 6.666666%; line-height: 1.5em;max-width:600px;}
+    div, div img {max-width: 100%;}
+    </style>
+</head>
+<body>
+    <div>
+        <img src="http://csd.fisica.ufc.br/solicitacoes/imagens/cabecalho_email_lrx_ufc.gif" alt="Laboratório de Raios X">
+    </div>
+    
+    <div class="main">
+        <p>Olá {{body.name}},<br> sua solicitação de análise da amostra <b> {{body.sample}}</b> foi
+            recebida pelo laboratório. No momento ela permanecerá na fila do equipamento <b>{{body.equipment}}</b> até que seja analizada.</p>
+            <p>Pedimos que aguarde até o processo ser concluído, quando você receberá um outro email notificando que a amostra entrou em processo de análise.</p>
+            <p>Caso possua alguma dúvida, por favor entre em contato com o Laboratório 
+            por meio do endereço de email lrxufc@gmail.com, ou pelo telefone 85 33669013.</p>
+            <p style="text-align:right;">Atenciosamente,<br>Laboratório de Raios-X</p>
+    </div>
+    <div>
+        <img src="http://csd.fisica.ufc.br/solicitacoes/imagens/rodape_email.gif" alt="Bloco 928, sala 34 - Campus do Pici">
+    </div>
+</body>
+</html>

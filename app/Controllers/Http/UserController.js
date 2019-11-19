@@ -237,7 +237,7 @@ class UserController {
 		switch(auth.user.access_level_slug){
 			case "operador":
 			case "administrador":
-				const user = await User.query().where('id', '!=', '1').andWhere('name', 'like', `%${filter}%`).orderBy('created_at', 'desc').paginate(page, perPage);
+				const user = await User.query().whereRaw(`id != 1 AND name LIKE '%${filter}%' OR id != 1 AND email LIKE '%${filter}%'`).orderBy('created_at', 'desc').paginate(page, perPage);
 		        return user;
 			break;
 			case "professor":
@@ -255,7 +255,7 @@ class UserController {
 
 				studant_id = studant_id.join(',');
 
-				let studant = await User.query().whereRaw(`id IN (${studant_id}) AND name LIKE '%${filter}%'`).orderBy('created_at', 'desc').paginate(page, perPage);
+				let studant = await User.query().whereRaw(`id IN (${studant_id}) AND name LIKE '%${filter}%' OR id IN (${studant_id}) AND email LIKE '%${filter}%' `).orderBy('created_at', 'desc').paginate(page, perPage);
 				return studant;
 			break;
 		}

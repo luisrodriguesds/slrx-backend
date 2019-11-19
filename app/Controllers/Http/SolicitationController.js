@@ -95,6 +95,7 @@ class SolicitationController {
     const data = request.only(['equipment_id', 'gap_id', 'method', 'composition', 'shape', 'flammable', 'radioactive', 'toxic', 'corrosive', 'hygroscopic', 'note']);
     let {settings, quantity=null} = request.all();
     const now = dateformat(Date.now(), 'yyyy-mm-dd HH:MM:ss');
+    quantity = (quantity == null) ? 1 : quantity;
     quantity = (quantity > 20) ? 20 : quantity; // previnir criar infinitas
     
     //Validation
@@ -166,41 +167,49 @@ class SolicitationController {
     identify+= ((data.method == 'DRX') ? 'D' : 'F');
 
     //Quantidade de amostras que devem ser cadastradas
-    let array_sample = [];
     let start = await Solicitation.query().where({user_id:auth.user.id, method:data.method}).fetch();
-        start = ((start == null) ? 1 : JSON.parse(JSON.stringify(start)).length+1);
- 
+    start = conv(start);
+    start = ((start.length == 0) ? 1 : start.length+1);  
+    
     //Samples in array
-    if (quantity !== 1) {
-      for (var i = start; i < (parseInt(quantity)+start); i++) {
-        let count = ((i < 10) ? '00'+(i) : ((i >= 10 && i < 100) ? '0'+(i) : ''+i));
-        array_sample.push({name:identify+count, ...data, settings:JSON.stringify(settings), user_id:auth.user.id, created_at:now, updated_at:now});
-      }
-    }else{
-      let count = ((start < 10) ? '00'+(start) : ((start >= 10 && start < 100) ? '0'+(start) : ''+start));
-      array_sample.push({name:identify+count, ...data, settings:JSON.stringify(settings), user_id:auth.user.id,  created_at:now, updated_at:now});
+    let array_sample = [];
+    let sample_name = [];
+    for (var i = start; i < (parseInt(quantity)+start); i++) {
+      let count = ((i < 10) ? '00'+(i) : ((i >= 10 && i < 100) ? '0'+(i) : ''+i));
+      array_sample.push({name:identify+count, ...data, settings:JSON.stringify(settings), user_id:auth.user.id, created_at:now, updated_at:now});
+      sample_name.push(identify+count);
     }
 
     //Check User - Perguntar ao sasaki as limitações de envio
     //Verificar qual o nível de acesso do usuário
     //Se aluno, verificar se ele pode enviar amostra frx e se está no limite de amostras
     //Se professor, verificar se ele pode enviar amsotra frx e se está no limite de amostras
-    // switch(auth.user.access_level_slug){
-    //   case "aluno":
-    //     //Aluno só pode ter até 20 amostras entre os estágios 1 a 6.
+    switch(auth.user.access_level_slug){
+      case "aluno":
+        //Aluno só pode ter até 20 amostras entre os estágios 1 a 6.
 
-    //     //O seu professor deve ter a permissão frx se for o caso
+        //O seu professor deve ter a permissão frx se for o caso
 
-    //     //Informar ao seu professor
+        //Informar ao seu professor
+        let prof = await Database.table({
+                    u:'users',
+                    ps:'professors_students'
+                  }).select({
+                    id:'u.id',
+                    email:'u.email',
+                    name:'u.name'
+                  }).whereRaw(`ps.studant_id = '${auth.user.id}' AND u.id = ps.professor_id`);
+        prof = conv(prof);
 
-    //   break;
-    //   case "professor":
-    //     //Professor pode cadastrar quantas quiser?
-
-    //     //Informar ao sasaki?,
-
-    //   break;
-    // }
+        let body = {prof:prof[0].name, studant:auth.user.name, samples:sample_name.join(), link:Env.get('APP_URL_PROD')};
+        Mail.send('emails.newSolicitationByStudant', {body}, (message) => {
+          message
+              .to(prof[0].email)
+              .from('<from-email>')
+              .subject("SLRX - UFC | Liberação de Amostra para Aluno")
+        });
+      break;
+    }
 
     //Gravar no banco
     try{
@@ -227,7 +236,6 @@ class SolicitationController {
     const data = request.only(['equipment_id', 'gap_id', 'method', 'composition', 'shape', 'flammable', 'radioactive', 'toxic', 'corrosive', 'hygroscopic', 'note']);
     const message_success = "Amostra alterada com successo!", message_faul = "Usuário não tem permissão para realizar estas alterações!";
     let {settings, id, user_id} = request.all();
-    
     //Validation
     //Rules
     let rules = {
@@ -385,7 +393,7 @@ class SolicitationController {
     switch (auth.user.access_level_slug) {
         case 'administrador':
         case 'operador':
-          solicitations = await Solicitation.query().with('equipment').with('user').orderByRaw('created_at DESC, name ASC').limit(100).paginate(page, perPage);
+          solicitations = await Solicitation.query().with('equipment').with('user').orderByRaw('created_at DESC, name DESC').limit(100).paginate(page, perPage);
         break;
         case 'professor':
             //Professor deve aparecer as solicitações dele e de seus alunos
@@ -393,7 +401,7 @@ class SolicitationController {
             //Sim
             const hasStudant = await ProfStudent.findBy({professor_id:auth.user.id});
             if (hasStudant == null) {
-              solicitations = await Solicitation.query().where({user_id:auth.user.id}).with('equipment').orderByRaw('created_at DESC, name ASC').limit(50).paginate(page, perPage);
+              solicitations = await Solicitation.query().where({user_id:auth.user.id}).with('equipment').orderByRaw('created_at DESC, name DESC').limit(50).paginate(page, perPage);
             }else{
               //Não
               //Este aluno tem amostra cadastradas?
@@ -494,7 +502,7 @@ class SolicitationController {
               }
         break;
         default:
-          solicitations = await Solicitation.query().where({user_id:auth.user.id}).with('equipment').orderByRaw('created_at DESC, name ASC').limit(50).paginate(page, perPage);
+          solicitations = await Solicitation.query().where({user_id:auth.user.id}).with('equipment').orderByRaw('created_at DESC, name DESC').limit(50).paginate(page, perPage);
         break;
     }
     
@@ -682,14 +690,12 @@ class SolicitationController {
 
   async next_step ({ request, response, auth }) {
     const {id} = request.all();
-    let check, message, body, title;
+    let check, message, body, title, to;
     let solicitation = await Solicitation.query().where('id', id).with('user').with('equipment').fetch();
-        solicitation = JSON.parse(JSON.stringify(solicitation));
+        solicitation = conv(solicitation)[0];
     if (solicitation.length == 0) {
       return response.status(406).json({message:"Solicitação não encontrada", error:true});
     }
-      
-    solicitation = solicitation[0];
 
     switch (auth.user.access_level_slug) {
       case 'administrador':
@@ -705,24 +711,14 @@ class SolicitationController {
             // 2 -> 3: [SLRX] Análise da Amostra Nome Autorizada 
             message = "Amostra autorizada pelo laboratório com sucesso!";
             title   = `[SLRX] Análise da Amostra ${solicitation.name} Autorizada`;  
-            body    = `<p>Olá ${solicitation.user.name},<br> sua solicitação de análise da amostra <b> ${solicitation.name}</b> foi
-                      aprovada pelo responsável e pelo laboratório. Portanto, <strong>estamos aguardando o recebimento da amostra para iniciarmos a análise.</strong></p>
-                      <p>O horário de recibemento e entrega de amostras do Laboratório de Raios X é de segunda a sexta nos seguintes horários: 08:30 às 11:30 e 14:00 às 17:00.</p>
-                      <p>Lembre-se de etiquetar suas amostra usando o código de identificação da mesma.</p>
-                      <p>Caso possua alguma dúvida, por favor entre em contato com o Laboratório 
-                      por meio do endereço de email lrxufc@gmail.com, ou pelo telefone 85 33669013.</p>
-                      <p style="text-align:right;">Atenciosamente,<br>Laboratório de Raios-X</p>`;
+            to      = `emails.solicitationTwoToTree`;
           break;
           case 3:
             // 3 -> 4: [SLRX] Amostra  Nme Entregue ao Laboratório
             message = "Amostra entregue ao laboratório com sucesso!";
             title   = `[SLRX] Amostra  ${solicitation.name} Entregue ao Laboratório`;  
-            body    = `<p>Olá ${solicitation.user.name},<br> sua solicitação de análise da amostra <b> ${solicitation.name}</b> foi
-                      recebida pelo laboratório. No momento ela permanecerá na fila do equipamento <b>${solicitation.equipment.name}</b> até que seja analizada.</p>
-                      <p>Pedimos que aguarde até o processo ser concluído, quando você receberá um outro email notificando que a amostra entrou em processo de análise.</p>
-                      <p>Caso possua alguma dúvida, por favor entre em contato com o Laboratório 
-                      por meio do endereço de email lrxufc@gmail.com, ou pelo telefone 85 33669013.</p>
-                      <p style="text-align:right;">Atenciosamente,<br>Laboratório de Raios-X</p>`;
+            to      = `emails.solicitationTreeToFour`;
+            
             await Solicitation.query().where('id', id).update({received_date:`${dateformat(Date.now(), 'yyyy-mm-dd HH:MM:ss')}`});
         
           break;
@@ -730,23 +726,15 @@ class SolicitationController {
             // 4 -> 5: [SLRX] Análise da Amostra Nome Em Processo de Análise
             message = "Amostra em processo de análise!";
             title   = `[SLRX] Análise da Amostra ${solicitation.name} Em Processo de Análise`;  
-            body    = `<p>Olá ${solicitation.user.name},<br> sua solicitação de análise da amostra <b> ${solicitation.name}</b> foi
-                      recebida pelo laboratório. No momento ela permanecerá na fila do equipamento <b>${solicitation.equipment.name}</b> entrou em processo de análise.</p>
-                      <p>Em no máximo 24 horas, a análise estará pronta. Entretanto, a entrega do resultado será feita após o recolhimento da amostra.</p>
-                      <p>Caso possua alguma dúvida, por favor entre em contato com o Laboratório 
-                      por meio do endereço de email lrxufc@gmail.com, ou pelo telefone 85 33669013.</p>
-                      <p style="text-align:right;">Atenciosamente,<br>Laboratório de Raios-X</p>`;
+            to      = `emails.solicitationFourToFive`;
+            
           break;
           case 5:
             // 5 -> 6: [SLRX] Análise da Amostra Nome Concluída
             message = "Arquivo enviado com sucesso!";
             title   = `[SLRX] Análise da Amostra ${solicitation.name} Concluída`;  
-            body    = `<p>Olá ${solicitation.user.name},<br> sua solicitação de análise da amostra <b> ${solicitation.name}</b>  terminou
-                      de ser analisada pelo laboratório. Contudo <b>o resultado somente lhe será disponibilizado após o recolhimento da amostra</b>.</p>
-                      <p>Pedimos que venha ao laboratório em um dos seguintes horários: de segunda a sexta de 08:30 às 11:30 e 14:00 às 17:00.</p>
-                      <p>Caso possua alguma dúvida, por favor entre em contato com o Laboratório 
-                      por meio do endereço de email lrxufc@gmail.com, ou pelo telefone 85 33669013.</p>
-                      <p style="text-align:right;">Atenciosamente,<br>Laboratório de Raios-X</p>`;
+            to      = `emails.solicitationTwoToTree`;
+
             //Receber o arquivo e colocar na pasta tmp
            
               let sample = request.file('sample', {
@@ -776,16 +764,7 @@ class SolicitationController {
              // 6 -> 7: [SLRX] Amostra Nome Finalizada!
             message = "Amostra consluída!";
             title   = `[SLRX] Amostra ${solicitation.name} Finalizada!`;  
-            body    = `<p>Olá ${solicitation.user.name},<br> sua solicitação de análise da amostra <b> ${solicitation.name}</b>  foi
-                      realizado com sucesso, então agradecemos sua cooperação! Com isso, seu resultado já está disponível em nosso site.</p>
-                      <p>Para visualizá-lo acesse o <a href="${Env.get('APP_URL')}" target="_blank">Sistema de Solicitação de Análises de Raios-X</a>.<br>
-                      Vá na aba <b>Concluídas</b>, procure pela amostra com identificação <b>${solicitation.name}</b>. Ao clicar nela
-                      será exibida uma janela do lado direito contendo as informações da amostra. Nesta janela basta mover a barra para baixo, e então será possível
-                      visualizar um <b>botão de download</b>, que ao clicar, o download do resultado será efetuado!<br>
-                      O LRX agradece sua preferência pelos nosssos serviços! Estaremos sempre a disposição!</p>
-                      <p>Caso possua alguma dúvida, por favor entre em contato com o Laboratório 
-                      por meio do endereço de email lrxufc@gmail.com, ou pelo telefone 85 33669013.</p>
-                      <p style="text-align:right;">Atenciosamente,<br>Laboratório de Raios-X</p>`;
+            to      = `emails.solicitationSexToSeven`;
             
             await Solicitation.query().where('id', id).update({conclusion_date:`${dateformat(Date.now(), 'yyyy-mm-dd HH:MM:ss')}`});
 
@@ -799,12 +778,13 @@ class SolicitationController {
         await Solicitation.query().where('id', id).update({status:(solicitation.status+1)});
 
         //Liberar email quando estiver em produção!
-        // Mail.send('emails.warningSample', {body}, (message) => {
-        //   message
-        //       .to(solicitation.user.email)
-        //       .from('<from-email>')
-        //       .subject(title)
-        // });
+        body    = {name: solicitation.user.name, sample:solicitation.name, equipment:solicitation.equipment.name, link:Env.get('APP_URL_PROD')};
+        Mail.send(to, {body}, (message) => {
+          message
+              .to(solicitation.user.email)
+              .from('<from-email>')
+              .subject(title)
+        });
 
         return response.status(200).json({message, error:false}); 
 
@@ -914,7 +894,7 @@ class SolicitationController {
                     // title   = '[SLRX] Amostra '+solicitation.name+' Finalizada!';  
                     // body    = '<p>Olá '+solicitation.user.name+',<br> sua solicitação de análise da amostra <b> ${solicitation.name}</b>  foi';
                     // body   += 'realizado com sucesso, então agradecemos sua cooperação! Com isso, seu resultado já está disponível em nosso site.</p>';
-                    // body   += '<p>Para visualizá-lo acesse o <a href="'+Env.get('APP_URL')+'" target="_blank">Sistema de Solicitação de Análises de Raios-X</a>.<br>';
+                    // body   += '<p>Para visualizá-lo acesse o <a href="'+Env.get('APP_URL_PROD')+'" target="_blank">Sistema de Solicitação de Análises de Raios-X</a>.<br>';
                     // body   += 'Vá na aba <b>Concluídas</b>, procure pela amostra com identificação <b>${solicitation.name}</b>. Ao clicar nela';
                     // body   += 'será exibida uma janela do lado direito contendo as informações da amostra. Nesta janela basta mover a barra para baixo, e então será possível';
                     // body   += 'visualizar um <b>botão de download</b>, que ao clicar, o download do resultado será efetuado!<br>';
