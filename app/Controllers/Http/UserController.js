@@ -691,7 +691,6 @@ class UserController {
 	    			title:'required|in:Graduando,Graduado,Especializando,Especialista,Mestrando,Mestre,Doutorando,Doutor',
 	    			laboratory:'required',
 	    			research:'required',
-	    			description:'required'
 	    		}
 
 	    		validation = await validate(academy, rules);
