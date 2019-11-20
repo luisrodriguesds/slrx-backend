@@ -267,16 +267,16 @@ class UserController {
 		let users;
 		switch(filter){
 			case "Filtro":
-				users = await User.query().where('id', '!=', '1').orderBy('created_at', 'desc').paginate(page, perPage);
+				users = await User.query().where('id', '!=', '1').orderBy('name', 'asc').paginate(page, perPage);
 			break;
 			case "Professores":
-				users = await User.query().where('access_level_slug', '=', 'professor').orderBy('created_at', 'desc').paginate(page, perPage);
+				users = await User.query().where('access_level_slug', '=', 'professor').orderBy('name', 'asc').paginate(page, perPage);
 			break;
 			case "Alunos":
-				users = await User.query().where('access_level_slug', '=', 'aluno').orderBy('created_at', 'desc').paginate(page, perPage);
+				users = await User.query().where('access_level_slug', '=', 'aluno').orderBy('name', 'asc').paginate(page, perPage);
 			break;
 			case "Operadores":
-				users = await User.query().where('access_level_slug', '=', 'operador').orderBy('created_at', 'desc').paginate(page, perPage);
+				users = await User.query().where('access_level_slug', '=', 'operador').orderBy('name', 'asc').paginate(page, perPage);
 			break;
 			case "Empresas":
 				//Exibir empresa adapdando para usuário
@@ -718,7 +718,7 @@ class UserController {
 
 					if (access_level_slug == 'aluno') {
 						const {email_leader=null} = request.all();
-						let prof = await User.query().whereRaw(`email = '${email_leader}' AND access_level_slug IN ('professor', 'administrador', 'operador')`).fetch();
+						let prof = await User.query().whereRaw(`email = '${email_leader}'f AND access_level_slug IN ('professor', 'administrador', 'operador')`).fetch();
 							prof = conv(prof);
 						if (prof.length == 0) {
 							return response.status(200).json({message:"Professor não encontrado"})
