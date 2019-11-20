@@ -718,7 +718,7 @@ class UserController {
 
 					if (access_level_slug == 'aluno') {
 						const {email_leader=null} = request.all();
-						let prof = await User.query().whereRaw(`email = ${email_leader} AND access_level_slug IN ('professor', 'administrador', 'operador')`).fetch();
+						let prof = await User.query().whereRaw(`email = '${email_leader}' AND access_level_slug IN ('professor', 'administrador', 'operador')`).fetch();
 							prof = conv(prof);
 						if (prof.length == 0) {
 							return response.status(200).json({message:"Professor não encontrado"})
