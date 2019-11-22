@@ -410,7 +410,7 @@ class UserController {
 				     //send the emails
 				     //confirm register in email
 				    buff = new Buffer(data.email); 
-				    linkConfirm =  `${Env.get('APP_URL')}/api/user/confirm?email=${buff.toString('base64')}`;
+				    linkConfirm =  `${Env.get('APP_URL_PROD')}/api/user/confirm?email=${buff.toString('base64')}`;
 				    Mail.send('emails.confirmEmail', {...data, linkConfirm}, (message) => {
 			          message
 			              .to(data.email)
@@ -421,7 +421,7 @@ class UserController {
 				    //Professor confirm studant
 				    let {email_leader} = request.all(); 
 				    buff2 = new Buffer(email_leader);
-				    linkBond = `${Env.get('APP_URL')}/api/user/confirm-bond?email=${buff.toString('base64')}&&email_leader=${buff2.toString('base64')}`
+				    linkBond = `${Env.get('APP_URL_PROD')}/api/user/confirm-bond?email=${buff.toString('base64')}&&email_leader=${buff2.toString('base64')}`
 				    Mail.send('emails.professorConfirmStudant', {linkBond, email_leader, email:data.email, name:data.name}, (message) => {
 			          message
 			              .to(email_leader)
@@ -462,7 +462,7 @@ class UserController {
 				     //send the emails
 				     //confirm register in email
 				    buff = new Buffer(data.email); 
-				    linkConfirm =  `${Env.get('APP_URL')}/api/user/confirm?email=${buff.toString('base64')}`;
+				    linkConfirm =  `${Env.get('APP_URL_PROD')}/api/user/confirm?email=${buff.toString('base64')}`;
 				    Mail.send('emails.confirmEmail', {...data, linkConfirm}, (message) => {
 			          message
 			              .to(data.email)
@@ -471,8 +471,8 @@ class UserController {
 			          });
 
 				    //Sasaki confirm professor
-				   	linkConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=true`;
-				    linkNoConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=false`;
+				   	linkConfirm 		= `${Env.get('APP_URL_PROD')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=true`;
+				    linkNoConfirm 		= `${Env.get('APP_URL_PROD')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=false`;
 				    Mail.send('emails.professorConfirm', {linkConfirm,linkNoConfirm, email:data.email, name:data.name, ...academy}, (message) => {
 			          message
 			              .to(email_responsable)
@@ -516,8 +516,8 @@ class UserController {
 					data.access_level_slug = type_company;
 				}
 	    		//Check if the cnpj exist and if is bond
-	    		let checkCompany = await Company.findBy({cnpj:company.cnpj});
-	    		if (checkCompany == null) {
+	    		let checkCompany = await Company.query().where({cnpj:company.cnpj}).fetch();
+	    		if (conv(checkCompany).length == 0) {
 	    			company 		= await Company.create({...company});   
 				}else{
 					checkCompany = JSON.parse(JSON.stringify(checkCompany));
@@ -530,7 +530,7 @@ class UserController {
 				//send the emails
 				//confirm register in email
 				buff = new Buffer(data.email); 
-				linkConfirm =  `${Env.get('APP_URL')}/api/user/confirm?email=${buff.toString('base64')}`;
+				linkConfirm =  `${Env.get('APP_URL_PROD')}/api/user/confirm?email=${buff.toString('base64')}`;
 				Mail.send('emails.confirmEmail', {...data, linkConfirm}, (message) => {
 				message
 					.to(data.email)
@@ -539,8 +539,8 @@ class UserController {
 				});
 
 				//Sasaki confirm professor
-				linkConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=true`;
-				linkNoConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=false`;
+				linkConfirm 		= `${Env.get('APP_URL_PROD')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=true`;
+				linkNoConfirm 		= `${Env.get('APP_URL_PROD')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=false`;
 				Mail.send('emails.companyConfirm', {linkConfirm,linkNoConfirm, company,...data}, (message) => {
 					message
 						.to(email_responsable)
@@ -574,7 +574,7 @@ class UserController {
 				//send the emails
 				//confirm register in email
 				buff = new Buffer(data.email); 
-				linkConfirm =  `${Env.get('APP_URL')}/api/user/confirm?email=${buff.toString('base64')}`;
+				linkConfirm =  `${Env.get('APP_URL_PROD')}/api/user/confirm?email=${buff.toString('base64')}`;
 				Mail.send('emails.confirmEmail', {...data, linkConfirm}, (message) => {
 				message
 					.to(data.email)
@@ -583,8 +583,8 @@ class UserController {
 				});
 
 				//Sasaki confirm professor
-				linkConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=true`;
-				linkNoConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=false`;
+				linkConfirm 		= `${Env.get('APP_URL_PROD')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=true`;
+				linkNoConfirm 		= `${Env.get('APP_URL_PROD')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=false`;
 				Mail.send('emails.operatorConfirm', {linkConfirm,linkNoConfirm, ...data}, (message) => {
 					message
 						.to(email_responsable)
@@ -618,7 +618,7 @@ class UserController {
 				//send the emails
 				//confirm register in email
 				buff = new Buffer(data.email); 
-				linkConfirm =  `${Env.get('APP_URL')}/api/user/confirm?email=${buff.toString('base64')}`;
+				linkConfirm =  `${Env.get('APP_URL_PROD')}/api/user/confirm?email=${buff.toString('base64')}`;
 				Mail.send('emails.confirmEmail', {...data, linkConfirm}, (message) => {
 				message
 					.to(data.email)
@@ -627,8 +627,8 @@ class UserController {
 				});
 
 				//Sasaki confirm professor
-				linkConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=true`;
-				linkNoConfirm 		= `${Env.get('APP_URL')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=false`;
+				linkConfirm 		= `${Env.get('APP_URL_PROD')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=true`;
+				linkNoConfirm 		= `${Env.get('APP_URL_PROD')}/api/user/confirm-user?email=${buff.toString('base64')}&confirm=false`;
 				Mail.send('emails.freelanceConfirm', {linkConfirm,linkNoConfirm, ...data}, (message) => {
 					message
 						.to(email_responsable)
@@ -741,7 +741,7 @@ class UserController {
 							//enviar email pro novo professor com o novo aluno
 							buff  = new Buffer(data.email);
 							buff2 = new Buffer(email_leader);
-							let linkBond = `${Env.get('APP_URL')}/api/user/confirm-bond?email=${buff.toString('base64')}&&email_leader=${buff2.toString('base64')}`
+							let linkBond = `${Env.get('APP_URL_PROD')}/api/user/confirm-bond?email=${buff.toString('base64')}&&email_leader=${buff2.toString('base64')}`
 							Mail.send('emails.professorConfirmStudant', {linkBond, email_leader, email:data.email, name:data.name}, (message) => {
 							message
 								.to(email_leader)
