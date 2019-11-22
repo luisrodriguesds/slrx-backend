@@ -516,14 +516,14 @@ class UserController {
 					data.access_level_slug = type_company;
 				}
 	    		//Check if the cnpj exist and if is bond
-	    		let checkCompany = await Company.query().where({cnpj:company.cnpj}).fetch();
+	    		let checkCompany = await Company.query().where('cpnj', company.cnpj).fetch();
 	    		if (conv(checkCompany).length == 0) {
 	    			company 		= await Company.create({...company});   
 				}else{
-					checkCompany = JSON.parse(JSON.stringify(checkCompany));
-					company 		= checkCompany;
+					company 		= conv(checkCompany)[0];
 				}
 
+				console.log(company);
 				user 			= await User.create({...data, other_email, phone2, frx_permission:1});
 				const comUser 	= await CompanyUser.create({company_datum_id:company.id, user_id:user.id});
 				

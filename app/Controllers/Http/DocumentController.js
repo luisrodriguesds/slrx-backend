@@ -41,7 +41,7 @@ class DocumentController {
 
 	
   	//Enviar email para user
-	  Mail.send('emails.sendProposta', {user, url:`${Env.get('APP_URL')}/api/solictation/proposta?data=${url}`}, (message) => {
+	  Mail.send('emails.sendProposta', {user, url:`${Env.get('APP_URL_PROD')}/api/solictation/proposta?data=${url}`}, (message) => {
 		message
 			.to(user.email)
 			.from('<from-email>')
@@ -49,7 +49,7 @@ class DocumentController {
 	});
 
   	//Gravar no banco
-  	const res = await Document.create({user_id, type:'proposta'});
+  	const res = await Document.create({user_id, type:'proposta', url});
 
   	//Returno to page
   	return response.status(200).json({message:"Proposta enviada com sucesso!", error:false});
