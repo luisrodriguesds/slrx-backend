@@ -339,7 +339,7 @@ class UserController {
 	      password: 'required|min:8',
 	      access_level_slug:'in:aluno,professor,empresa,operador,autonomo',
 	      cpf:'required|min:14|max:14',
-	      birthday:'date',
+	    //   birthday:'date',
 	      sex:'required|min:1|max:2',
 	      state:'required',
 	      city:'required',
