@@ -804,7 +804,7 @@ class SolicitationController {
             //Ver se ele pode passar essa amostra de 1 para 2
             check = await Solicitation.query().whereRaw(`user_id = ${auth.user.id} AND status > 1 AND status < 7`).fetch();
             check = JSON.parse(JSON.stringify(check));
-            if (check.length >= 20) {
+            if (check.length >= 10) {
               return response.status(200).json({message:"Você excedeu o seu limite de 4 análises de amostras simultânea. Por favor check se não há amostras para serem retiradas do laboratório.", error:true});                            
             }
 
