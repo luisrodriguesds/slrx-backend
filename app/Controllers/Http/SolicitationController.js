@@ -1486,7 +1486,6 @@ class SolicitationController {
 
   //Head of dashboard
   async head_dash({request, auth}) {
-
     try {
       await auth.check()
     } catch (error) {
@@ -1494,24 +1493,33 @@ class SolicitationController {
     }
 
     const {page=1, perPage=10} = request.all();
-    let users, drx, frx, online;
+    let users, drx, frx, online, years=[];
     let data = [];
-    if (auth.user.access_level_slug == 'administrador') {
-      users = await User.query().where('status', 1).paginate(page, perPage);
-      drx   = await Solicitation.query().where('method', 'DRX').andWhere('status', '>=', 1).paginate(page, perPage);
-      frx   = await Solicitation.query().where('method', 'FRX').andWhere('status', '>=', 1).paginate(page, perPage);
-      online= getRandom(15);
-    }else{
-      users = {total:1};
-      drx   = await Solicitation.query().where('method', 'DRX').andWhere('status', '>=', 1).andWhere('user_id', auth.user.id).paginate(page, perPage);
-      frx   = await Solicitation.query().where('method', 'FRX').andWhere('status', '>=', 1).andWhere('user_id', auth.user.id).paginate(page, perPage);
-      online= getRandom(15);
-    }
+    users = await User.query().where('status', 1).paginate(page, perPage);
+    online= getRandom(15);
     
+    //DRX e FRX
+    for (let i = 0; i <= (new Date().getFullYear())-2017; i++) {
+      years.push(2017+i);
+    }
+
+    let array_drx = await Promise.all(years.map(async (v,i) => {
+      drx   = await Solicitation.query().whereRaw(`method = 'DRX' AND status >= 5 AND YEAR(created_at) = '${v}'`).paginate(page, perPage);
+      return {year:v, count:drx.toJSON().total}
+    }));
+
+    let array_frx = await Promise.all(years.map(async (v,i) => {
+      frx   = await Solicitation.query().whereRaw(`method = 'FRX' AND status >= 5 AND YEAR(created_at) = '${v}'`).paginate(page, perPage);
+      return {year:v, count:frx.toJSON().total}
+    }));
+
+    console.log(array_drx);
+    console.log(array_drx.map(v => v.count).reduce((a, c) => a+c ))
+
     data.push({tipo:'online', count:online});
     data.push({tipo:'users', count:conv(users).total});
-    data.push({tipo:'drx', count:conv(drx).total});
-    data.push({tipo:'frx', count:conv(frx).total});
+    data.push({tipo:'drx', count:array_drx.map(v => v.count).reduce((a, c) => a+c ), years:array_drx});
+    data.push({tipo:'frx', count:array_frx.map(v => v.count).reduce((a, c) => a+c ), years:array_frx});
     return data;
   } 
 
