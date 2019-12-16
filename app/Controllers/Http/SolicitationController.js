@@ -167,9 +167,11 @@ class SolicitationController {
     identify+= ((data.method == 'DRX') ? 'D' : 'F');
 
     //Quantidade de amostras que devem ser cadastradas
-    let start = await Solicitation.query().where({user_id:auth.user.id, method:data.method}).fetch();
-    start = conv(start);
-    start = ((start.length == 0) ? 1 : start.length+1);  
+    let start = await Solicitation.query().where({user_id:auth.user.id, method:data.method}).orderBy('name', 'ASC').fetch();
+    start = start.toJSON();
+
+    //Verifica se a contagem dos registro bate com o número da ultima amostra
+    start = ((start.length == 0) ? 1 : (parseInt(start[start.length-1].name.replace(identify, '')))+1);  
     
     //Samples in array
     let array_sample = [];
@@ -1512,9 +1514,6 @@ class SolicitationController {
       frx   = await Solicitation.query().whereRaw(`method = 'FRX' AND status >= 5 AND YEAR(created_at) = '${v}'`).paginate(page, perPage);
       return {year:v, count:frx.toJSON().total}
     }));
-
-    console.log(array_drx);
-    console.log(array_drx.map(v => v.count).reduce((a, c) => a+c ))
 
     data.push({tipo:'online', count:online});
     data.push({tipo:'users', count:conv(users).total});
