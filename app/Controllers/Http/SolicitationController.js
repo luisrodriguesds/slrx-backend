@@ -1,6 +1,7 @@
 'use strict'
 const Solicitation  = use('App/Models/Solicitation');
 const User          = use('App/Models/User');
+const Company       = use('App/Models/CompanyDatum');
 const ProfStudent   = use('App/Models/ProfessorsStudent');
 const Document 	    = use('App/Models/Document');
 const Helpers       = use('Helpers');
@@ -1515,8 +1516,20 @@ class SolicitationController {
       return {year:v, count:frx.toJSON().total}
     }));
 
+    //Users - aluno, professor, autonomo, operador, administrador, empresas
+    let access_level = ['Aluno','Professor','Autônomo','Operador','Administrador','Empresas'];
+    let array_users = await Promise.all(access_level.map(async (v,i) => {
+      if (v != 'Empresas') {
+        users = await User.query().where('access_level_slug', v).andWhere('status', 1).paginate(page, perPage);
+      }else{
+        users = await Company.query().where('status', 1).paginate(page, perPage);
+      }
+      return {access_level:v, count:users.toJSON().total}
+    }));
+
+
     data.push({tipo:'online', count:online});
-    data.push({tipo:'users', count:conv(users).total});
+    data.push({tipo:'users', count:array_users.map(v => v.count).reduce((a,c) => a+c), access_levels:array_users});
     data.push({tipo:'drx', count:array_drx.map(v => v.count).reduce((a, c) => a+c ), years:array_drx});
     data.push({tipo:'frx', count:array_frx.map(v => v.count).reduce((a, c) => a+c ), years:array_frx});
     return data;
