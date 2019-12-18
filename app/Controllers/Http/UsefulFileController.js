@@ -98,6 +98,8 @@ class UsefulFileController {
    * @param {View} ctx.view
    */
   async show ({ params, request, response, view }) {
+    const file = await Files.findBy('id',params.id);
+    return file;
   }
 
   /**

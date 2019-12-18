@@ -125,6 +125,7 @@ Route.get('/api/results/:name', 'SolicitationController.results');
 //Useful Files
 Route.group(() => {
 	Route.get('/api/useful-files', 'UsefulFileController.index').middleware(['auth']);
+	Route.get('/api/useful-files/show/:id', 'UsefulFileController.show').middleware(['auth']);
 	Route.post('/api/useful-files', 'UsefulFileController.store').middleware(['auth']);
 	Route.put('/api/useful-files/:id', 'UsefulFileController.update').middleware(['auth']);
 	Route.get('/api/useful-files/donwload/:name', 'UsefulFileController.download');
