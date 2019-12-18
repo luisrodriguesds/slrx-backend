@@ -5,6 +5,7 @@ package-lock.json
 # Adonis directory for storing tmp files
 tmp/results/*
 tmp/pictures/*
+tmp/usefulfiles/*
 !tmp/pictures/avatar-1.png
 # Environment variables, never commit this file
 .env
