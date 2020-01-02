@@ -5,7 +5,7 @@ const User 		= use('App/Models/User')
 const Company 	= use('App/Models/CompanyDatum');
 const Mail 		= use('Mail');
 const Env		= use('Env');
-
+const Request 	= use('request');
 const {
 	conv
   } = use('App/Helpers');
@@ -68,23 +68,36 @@ class DocumentController {
 
   async email({request, response, auth}){
 	  const data = request.only(['message', 'subject', 'to']);
+	  console.log(data.to.join("','"))
 
 	  if (auth.user.access_level_slug != 'administrador' && auth.user.access_level_slug != 'operador') {
 		return response.status(200).json({message:"Usuário não autorizado!", error:true});
 	  }
 
-	  const users = await User.query().whereRaw(`access_level_slug IN ('${data.to.join(',')}') AND status = 1 AND confirm = 1 AND confirm_email = 1 AND id != 1`).fetch();
-
-	  conv(users).map((user,i) => {
-		  console.log(user.email, user.id)
-		  Mail.send('emails.sendEmail', {...data}, (message) => {
-			message
-				.to(user.email)
-				.from('<from-email>')
-				.subject(`SLRX - UFC | ${data.subject}`)
-			});
-		})
-
+	  const users = await User.query().whereRaw(`access_level_slug IN ('${data.to.join("','")}') AND status = 1 AND confirm = 1 AND confirm_email = 1 AND id != 1`).fetch();
+	//   conv(users).map((user,i) => {
+	// 	  console.log(user.email, user.id)
+	// 	  Mail.send('emails.sendEmail', {...data}, (message) => {
+	// 		message
+	// 			.to(user.email)
+	// 			.from('<from-email>')
+	// 			.subject(`SLRX - UFC | ${data.subject}`)
+	// 		});
+	// 	})
+	
+	users.toJSON().map((user,i) => { 
+		console.log(user.email, user.id)
+		let email = user.email;
+		let dados = {assunto:`SLRX | ${data.subject}`, corpo:data.message, email};
+		let op = {
+			url:'http://csdint.fisica.ufc.br/solicitacoes/send-email.php',
+			form: {email:JSON.stringify(dados)}
+		};
+		Request.post(op, (err,httpResponse,body) =>{ 
+			console.log(body);
+		});
+	})
+	 
 	return response.status(200).json({message:"Emails enviados com sucesso!", error:false});
 	  
   }
