@@ -741,7 +741,7 @@ class SolicitationController {
             //Receber o arquivo e colocar na pasta tmp
            
               let sample = request.file('sample', {
-                extnames: ['dat', 'json', 'png', 'jpg', 'jpeg', 'raw', 'txt', 'xrdml'],
+                extnames: ['dat', 'json', 'png', 'jpg', 'jpeg', 'raw', 'txt', 'xrdml', 'xls'],
                 size: '2mb'
               });
               // console.log(sample);
