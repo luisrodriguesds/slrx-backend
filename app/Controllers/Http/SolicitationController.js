@@ -1244,7 +1244,14 @@ class SolicitationController {
       full.city         = user.address.city_address;
       full.state        = user.address.state_address;
     }else{
-      return response.status(200).json({message:"Usuário não pode redecer proposta.", error:true})
+      full.name         = user.name;
+      full.doc          = user.cpf;
+      full.street       = '';
+      full.number       = '';
+      full.cep          = '';
+      full.neighborhood = '';
+      full.city         = user.city;
+      full.state        = user.state;
     }
 
 
@@ -1410,7 +1417,15 @@ class SolicitationController {
       full.city         = user.address.city_address;
       full.state        = user.address.state_address;
     }else{
-      return response.status(200).json({message:"Usuário não pode redecer proposta.", error:true})
+      full.name         = user.name;
+      full.doc          = user.cpf;
+      full.street       = '';
+      full.number       = '';
+      full.cep          = '';
+      full.neighborhood = '';
+      full.city         = user.city;
+      full.state        = user.state;
+      
     }
 
 
