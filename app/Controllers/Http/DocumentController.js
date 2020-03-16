@@ -13,29 +13,55 @@ class DocumentController {
   
   async index_proposta ({request, response, auth}) {
   	const {user_id} = request.all();
-
+	let doc
   	//Para listar todas as propostas independente do usuário
-  	let user = await User.findBy('id', user_id);
-  	await user.load('company');
-  	user = JSON.parse(JSON.stringify(user));
-  	let users = await Company.findBy('id', user.company[0].id);
-  	await users.load('users');
-  	users = JSON.parse(JSON.stringify(users));
-  	users = users.users;
-  	let listUsers = [];
-  	users.map(v => {
-  		listUsers.push(v.id);
-  	})
-  	users = listUsers.join();
+	let user = await User.findBy('id', user_id);
+	switch (user.toJSON().access_level_slug) {
+		case 'administrador':
+		case 'operador':
+		case 'autonomo':
+			doc = await Document.query().where('user_id', user.toJSON().id).with('user').fetch();
+			return doc;
+		break;
+		case 'professor':
+		case 'aluno':
+			doc = await Document.query().where('user_id', user.toJSON().id).with('user').fetch();
+			return doc;
+		break;
+		case 'tecnico':
+		case 'financeiro':
+			await user.load('company');
+			user = JSON.parse(JSON.stringify(user));
+			let users = await Company.findBy('id', user.company[0].id);
+			await users.load('users');
+			users = JSON.parse(JSON.stringify(users));
+			users = users.users;
+			let listUsers = [];
+			users.map(v => {
+				listUsers.push(v.id);
+			})
+			users = listUsers.join();
 
-  	let doc = await Document.query().whereRaw(`user_id in (${users})`).with('user').fetch();
+			doc = await Document.query().whereRaw(`user_id in (${users})`).with('user').fetch();
 
-  	return doc;
+			return doc;
+		break;
+	}
+  	
   }
 
   async store_proposta ({request, response, auth}) {
-  	const {user_id, url} = request.all();
-  	
+  	let {user_id, url} = request.all();
+	let data = JSON.parse(decodeURIComponent(url));
+	console.log(data.name)
+
+	if (data.name) {
+		let user_id_name = await User.query().where('name', 'like', `%${data.name}%`).fetch()
+		if (user_id_name.toJSON().length > 0) {
+			user_id = user_id_name.toJSON()[0].id
+		}
+	}
+
   	//Selecionar user
 	const user = await User.findBy('id', user_id);
 

@@ -68,6 +68,8 @@
             <br/><strong> Endereço: </strong>{{full.street}}, {{full.number}}
             <br>{{full.cep}}, {{full.neighborhood}}
             <br/><strong> Cidade: </strong>{{full.city}} - {{full.state}}
+            <br/><strong> Contato: </strong>{{full.phone ? full.phone : ''}}
+            <br/><strong> Email: </strong>{{full.email ? full.email : ''}}
             <br/> 
             @if(data.observacoesProposta)
                 {{data.observacoesProposta}}
@@ -103,9 +105,9 @@
                        
                 </ul>
                 <h3>Preço Total: R${{formatMoney(valor_total)}}</h3>
-                <p> A validade da proposta é de {{diffDays}} dias. A ser depositado na conta bancária da ASTEF: </section>
-        <div class="span4 aviso"><strong>Agência (Banco do Brasil):</strong> 1702-7
-            <br/><strong>C/C:</strong> 38971-4
+                <p> A validade da proposta é de {{diffDays}} dias.</section>
+        <div class="span4 aviso">
+            
             <h5>FUNDAÇÃO DE APOIO A SERVIÇOS TÉCNICOS, ENSINO E FOMENTO A PESQUISAS - FUNDAÇÃO ASTEF</h5><strong>CGC:</strong> 08.918.421/0001-08
             <br/><strong>Inscrição Municipal:</strong> 22.6299-1
             <br/><strong>Inscrição Estadual:</strong> 06.211.114-0

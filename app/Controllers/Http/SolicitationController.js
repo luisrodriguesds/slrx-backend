@@ -1100,7 +1100,7 @@ class SolicitationController {
     let {data} = request.all();
     let array_drx = [], array_frx = [], referencia, start, end, res, valor_total, checkQtdPre;
     data = JSON.parse(decodeURIComponent(data));
-
+    
     //Amostras que foram selecionadas na proposta
     let solicitation = await Solicitation.query().whereRaw(`id in (${data.solicitations.join()})`).orderBy('name', 'asc').fetch();
         solicitation = JSON.parse(JSON.stringify(solicitation));
@@ -1221,10 +1221,16 @@ class SolicitationController {
     //USER
     let full = {};
     let user_id = (array_frx.length > 0) ? array_frx[0].user_id : array_drx[0].user_id;
+    if (data.name) {
+      let user_id_name = await User.query().where('name', 'like', `%${data.name}%`).fetch()
+      if (user_id_name.toJSON().length > 0) {
+        user_id = user_id_name.toJSON()[0].id
+      }
+    }
     let user = await User.findBy('id', user_id)
         await user.load('company');
         await user.load('address');
-        user = JSON.parse(JSON.stringify(user));
+        user = user.toJSON();
     if (user.access_level_slug == 'tecnico' || user.access_level_slug == 'financeiro') {
       full.name         = user.company[0].company_name;
       full.doc          = user.company[0].cnpj;
@@ -1234,6 +1240,7 @@ class SolicitationController {
       full.neighborhood = user.company[0].neighborhood;
       full.city         = user.company[0].company_city;
       full.state        = user.company[0].company_state;
+      full.phone        = user.phone1;
     }else if(user.access_level_slug == 'autonomo'){
       full.name         = user.name;
       full.doc          = user.cpf;
@@ -1243,6 +1250,8 @@ class SolicitationController {
       full.neighborhood = user.address.neighborhood_address;
       full.city         = user.address.city_address;
       full.state        = user.address.state_address;
+      full.email        = user.email
+      full.phone        = user.phone1;
     }else{
       full.name         = user.name;
       full.doc          = user.cpf;
@@ -1252,6 +1261,9 @@ class SolicitationController {
       full.neighborhood = '';
       full.city         = user.city;
       full.state        = user.state;
+      full.phone        = user.phone1;
+      full.email        = user.email
+
     }
 
 
@@ -1391,6 +1403,12 @@ class SolicitationController {
     //USER
     let full = {};
     let user_id = (array_frx.length > 0) ? array_frx[0].user_id : array_drx[0].user_id;
+    if (data.name) {
+      let user_id_name = await User.query().where('name', 'like', `%${data.name}%`).fetch()
+      if (user_id_name.toJSON().length > 0) {
+        user_id = user_id_name.toJSON()[0].id
+      }
+    }
     let user = await User.findBy('id', user_id)
         await user.load('company');
         await user.load('address');
@@ -1416,6 +1434,7 @@ class SolicitationController {
       full.neighborhood = user.address.neighborhood_address;
       full.city         = user.address.city_address;
       full.state        = user.address.state_address;
+      full.email        = user.email
     }else{
       full.name         = user.name;
       full.doc          = user.cpf;
@@ -1425,6 +1444,8 @@ class SolicitationController {
       full.neighborhood = '';
       full.city         = user.city;
       full.state        = user.state;
+      full.phone        = user.phone1;
+      full.email        = user.email
       
     }
 
