@@ -112,6 +112,11 @@ Route.group(() => {
 //Equipments
 Route.group(() => {
 	Route.get('/api/equipment', 'EquipmentController.index').middleware(['auth']);
+	Route.get('/api/equipment/all', 'EquipmentController.all').middleware(['auth']);
+	Route.get('/api/equipment/:id', 'EquipmentController.show').middleware(['auth']);
+	Route.put('/api/equipment/:id', 'EquipmentController.update').middleware(['auth']);
+	Route.delete('/api/equipment/:id', 'EquipmentController.destroy').middleware(['auth']);
+	Route.post('/api/equipment', 'EquipmentController.store').middleware(['auth']);
 });
 
 //Envio de email
