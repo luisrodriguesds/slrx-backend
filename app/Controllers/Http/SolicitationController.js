@@ -93,6 +93,18 @@ class SolicitationController {
   async store ({ request, response, auth}) {
     //DRX - {"tecnica":"drx","dois_theta_inicial":10,"dois_theta_final":100,"delta_dois_theta":0.013}
     //FRX - {"tecnica":"frx","resultado":"oxidos||elementos","medida":"semi-quantitativa"}
+    let user = null
+    if (auth.user.access_level_slug == 'administrador') {
+      user = request.all().user_id
+       if (user == null) {
+        user = auth.user.toJSON()
+       }else{
+         user = await User.findBy('id', user)
+       }
+    }else{
+      user = auth.user.toJSON()
+    }
+
     const data = request.only(['equipment_id', 'gap_id', 'method', 'composition', 'shape', 'flammable', 'radioactive', 'toxic', 'corrosive', 'hygroscopic', 'note']);
     let {settings, quantity=null} = request.all();
     const now = dateformat(Date.now(), 'yyyy-mm-dd HH:MM:ss');
@@ -133,7 +145,7 @@ class SolicitationController {
       let validation = await validate(settings, rules);
       if (validation.fails()) {
         return response.status(200).json({...validation.messages()[0], error:true});
-      }else if (auth.user.drx_permission == 0) {
+      }else if (user.drx_permission == 0) {
         return response.status(200).json({message:"Você não tem permissão para cadastrar amostra de análise DRX", error:true});
       }
 
@@ -149,26 +161,26 @@ class SolicitationController {
       let validation = await validate(settings, rules);
       if (validation.fails()) {
         return response.status(200).json({...validation.messages()[0], error:true});
-      }else if (auth.user.frx_permission == 0) {
+      }else if (user.frx_permission == 0) {
         return response.status(200).json({message:"Você não tem permissão para cadastrar amostra de análise FRX", error:true});
       }
     }
 
     //Gerar nome da amostra
-    const pieces = auth.user.name.split(' ');
+    const pieces = user.name.split(' ');
     let identify = '';
     for (let i = 0; i < pieces.length; i++) {
       identify+=pieces[i].charAt(0).toUpperCase();
     }
     identify = identify.slice(0, 3);
 
-    let number = auth.user.id;
+    let number = user.id;
         number = ((number < 10) ? '00'+number : ((number >= 10 && number < 100) ? '0'+number : ''+number));
     identify+=number;
     identify+= ((data.method == 'DRX') ? 'D' : 'F');
 
     //Quantidade de amostras que devem ser cadastradas
-    let start = await Solicitation.query().where({user_id:auth.user.id, method:data.method}).orderBy('name', 'ASC').fetch();
+    let start = await Solicitation.query().where({user_id:user.id, method:data.method}).orderBy('name', 'ASC').fetch();
     start = start.toJSON();
 
     //Verifica se a contagem dos registro bate com o número da ultima amostra
@@ -179,7 +191,7 @@ class SolicitationController {
     let sample_name = [];
     for (var i = start; i < (parseInt(quantity)+start); i++) {
       let count = ((i < 10) ? '00'+(i) : ((i >= 10 && i < 100) ? '0'+(i) : ''+i));
-      array_sample.push({name:identify+count, ...data, settings:JSON.stringify(settings), user_id:auth.user.id, created_at:now, updated_at:now});
+      array_sample.push({name:identify+count, ...data, settings:JSON.stringify(settings), user_id:user.id, created_at:now, updated_at:now});
       sample_name.push(identify+count);
     }
 
@@ -187,7 +199,7 @@ class SolicitationController {
     //Verificar qual o nível de acesso do usuário
     //Se aluno, verificar se ele pode enviar amostra frx e se está no limite de amostras
     //Se professor, verificar se ele pode enviar amsotra frx e se está no limite de amostras
-    switch(auth.user.access_level_slug){
+    switch(user.access_level_slug){
       case "aluno":
         //Aluno só pode ter até 20 amostras entre os estágios 1 a 6.
 
@@ -201,10 +213,10 @@ class SolicitationController {
                     id:'u.id',
                     email:'u.email',
                     name:'u.name'
-                  }).whereRaw(`ps.studant_id = '${auth.user.id}' AND u.id = ps.professor_id`);
+                  }).whereRaw(`ps.studant_id = '${user.id}' AND u.id = ps.professor_id`);
         prof = conv(prof);
 
-        let body = {prof:prof[0].name, studant:auth.user.name, samples:sample_name.join(), link:Env.get('APP_URL_PROD')};
+        let body = {prof:prof[0].name, studant:user.name, samples:sample_name.join(), link:Env.get('APP_URL_PROD')};
         Mail.send('emails.newSolicitationByStudant', {body}, (message) => {
           message
               .to(prof[0].email)
@@ -213,7 +225,7 @@ class SolicitationController {
         });
       break;
     }
-
+    
     //Gravar no banco
     try{
       await Database.insert(array_sample).into('solicitations');
