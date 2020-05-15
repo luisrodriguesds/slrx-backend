@@ -164,32 +164,31 @@ class UserController {
 			return response.status(200).json({...validation.messages()[0], error:true});
 		}
 
-        //Check conform and email confirm
-        let user = await User.findBy('email', email);
-        	user = JSON.parse(JSON.stringify(user)); //O resultado vido de finBy traz um objeto muito maior do que, então se usa essa conversao para que se traga somente os campos
-        if(user == null){
+		//Check conform and email confirm
+		let user = await User.findBy('email', email);
+		if(user == null){
 	    	return response.status(200).json({message:"Usuário não encontrado", error:true}); 			
-		}else if (user.confirm == 0) {
-	    	return response.status(200).json({message:"Responsável pelo Laboratório ainda não aprovou a liberação de seu acesso, entre em contato.", error:true}); 
-        }else if (user.confirm_email == 0) {
-	    	return response.status(200).json({message:"Email ainda não foi confirmado. Acesse sua caixa de entrada e libere seu cadastro.", error:true}); 
-        }else if (user.status == 0) {
-	    	return response.status(200).json({message:"Essa conta foi desativada. Entre em contato com o responsável pelo Laboratório.", error:true}); 
+		}else if (user.toJSON().confirm == 0) {
+			return response.status(200).json({message:"Responsável pelo Laboratório ainda não aprovou a liberação de seu acesso, entre em contato.", error:true}); 
+		}else if (user.toJSON().confirm_email == 0) {
+			return response.status(200).json({message:"Email ainda não foi confirmado. Acesse sua caixa de entrada e libere seu cadastro.", error:true}); 
+		}else if (user.toJSON().status == 0) {
+	    return response.status(200).json({message:"Essa conta foi desativada. Entre em contato com o responsável pelo Laboratório.", error:true}); 
 		}
 
 		try {
 			const token = await auth.attempt(email, password);
-			return token;
+			return response.status(200).send({token:token.token, user});
 		} catch (error) {
 	    	return response.status(200).json({message:"Senha incorreta! Tente novamente ou clique em esqueci minha senha!", error:true}); 			
 		}
-    }
+  }
 
-    async logout({auth }) { 
+  async logout({auth }) { 
 	  await auth.check()
 	  const token = auth.getAuthHeader()
-      return await auth.revokeTokens([token]);
-  	}
+    return await auth.revokeTokens([token]);
+  }
 
 	async picture({response,request, auth}){
 		let {id} = request.all();
