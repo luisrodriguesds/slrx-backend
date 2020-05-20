@@ -17,7 +17,7 @@
 const Route = use('Route')
 
 Route.get('/', () => {
-  return { message: "API it's working on port" }
+  return { message: "API it's working on port 3333" }
 })
 
 Route.group(() => {
@@ -35,15 +35,15 @@ Route.group(() => {
 	Route.get('/api/user/confirm-bond', 'UserController.confirm_bond');
 	Route.get('/api/user/confirm-user', 'UserController.confirm_user');
 
-	Route.post('/api/user', 'UserController.create');
+	Route.post('/api/user', 'UserController.create').validator(['StoreUser'])
 	Route.put('/api/user', 'UserController.update').middleware(['auth']);
 	Route.put('/api/user/update-adm', 'UserController.updateby_adm').middleware(['auth']);
 
-  	Route.get('/api/user/request-newpass/:email', 'UserController.request_newpass');
-  	Route.post('/api/user/set-newpass', 'UserController.set_newpass');
+  Route.get('/api/user/request-newpass/:email', 'UserController.request_newpass');
+  Route.post('/api/user/set-newpass', 'UserController.set_newpass');
 	Route.put('/api/user/change-pass', 'UserController.change_pass').middleware(['auth']);
 	  
-  	Route.delete('/api/user/delete', 'UserController.delete').middleware(['auth']);
+  Route.delete('/api/user/delete', 'UserController.delete').middleware(['auth']);
 	Route.delete('/api/user/delete-all', 'UserController.delete_all').middleware(['auth']);
 	  
 	Route.post('/api/user/pedding', 'UserController.pedding');

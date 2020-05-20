@@ -4,8 +4,13 @@
 const Model = use('Model')
 
 class AcademicDatum extends Model {
+	static boot () {
+    super.boot()    
+    this.addHook('afterCreate', 'AcademicHook.sendEmail')
+  }
+
 	user(){
-		return this.belongsTo('App/Models/Users');
+		return this.belongsTo('App/Models/User');
 	}
 }
 
