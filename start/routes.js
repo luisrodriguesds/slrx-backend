@@ -39,8 +39,8 @@ Route.group(() => {
 	Route.put('/api/user', 'UserController.update').middleware(['auth']);
 	Route.put('/api/user/update-adm', 'UserController.updateby_adm').middleware(['auth']);
 
-  Route.get('/api/user/request-newpass/:email', 'UserController.request_newpass');
-  Route.post('/api/user/set-newpass', 'UserController.set_newpass');
+  Route.post('/api/user/request-newpass', 'UserController.request_newpass').validator('RequestNewPassword')
+  Route.post('/api/user/set-newpass', 'UserController.set_newpass').validator('SetNewPassword')
 	Route.put('/api/user/change-pass', 'UserController.change_pass').middleware(['auth']);
 	  
   Route.delete('/api/user/delete', 'UserController.delete').middleware(['auth']);

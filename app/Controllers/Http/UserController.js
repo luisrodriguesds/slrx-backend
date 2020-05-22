@@ -780,79 +780,57 @@ class UserController {
     	return view.render('message', {message:"Vínculo efetuado com sucesso!", error:false});
 	}
 
-	async request_newpass({params, response}){
-		const email = (params.email == undefined) ? 0 : params.email;
-		const rules = {
-			email:'required|email'
-		}
-		//Validation
-		let validation = await validate({email}, rules);
-		if (validation.fails()) {
-			return response.status(200).json({...validation.messages()[0], error:true});
-		}
+	async request_newpass({ request, response }){
+		const { email } = request.all()
 
-        let   user  = await User.findBy('email', email);
-        if(user == null){
-            return response.status(200).json({"message":"Usuário não encontrado.", error:true});
+		let user = await User.findBy('email', email);
+		if(user == null){
+				return response.status(403).json({"message":"Usuário não encontrado."});
 		}
-		user = JSON.parse(JSON.stringify(user));
 		
-        const key   = await Hash.make(`${email}-${Math.random()*10000}`);
-        const link = `${Env.get('LINK_SET_NEW_PASS')}?token=${key}`;
-
-        try{
-	        Mail.send('emails.requestNewpass', {...user, link}, (message) => {
-	            message
-	                .to(email)
-	                .from('<from-email>')
-	                .subject('SLRX - UFC | Recuperação de Senha')
-	            })
-
-        }catch(e){
-			console.log(e);        	
-        }
-        
-        await RequestPass.create({user_id:user.id, key});
-        return response.status(200).json({"message":"Um chave de acesso foi enviada para seu email. Por favor verifique sua caixa de entrada e recupere sua senha.", error:false, key});
-    }
-
-    async set_newpass({request, response}){
-		const {token, password}  = request.all();
-		const rules = {
-			password:'required|min:8'
-		};
-
-		//Validation
-		let validation = await validate({password}, rules);
-		if (validation.fails()) {
-			return response.status(200).json({...validation.messages()[0], error:true});
+		try{
+			const key   = await Hash.make(`${email}-${Math.random()*10000}`);
+			await RequestPass.create({ user_id:user.id, key });
+			return response.status(200).json({"message":"Um chave de acesso foi enviada para seu email. Por favor verifique sua caixa de entrada e recupere sua senha." });
+		}catch(e){
+			console.log(e) 
+			return response.status(500).json({"message":"Algo de errado aconteceu com nosso servidor, por favor tente novamente mais tarde" })
 		}
+  }
+
+  async set_newpass({request, response}){
+		const {token, password}  = request.all();
 
 		const data = {password};
-        const req = await RequestPass.findBy('key', token);
+		const req = await RequestPass.findBy('key', token);
 
-        if (req == null) {
-            return response.status(200).json({"message":"Chave de acesso não foi encontrada. Tente a recuperação de senha novamente.", error:true})            
-        }
+		if (req == null) {
+			return response.status(403).json({"message":"Chave de acesso não foi encontrada. Tente a recuperação de senha novamente."})            
+		}
 
-        //Comparar as datas
-        const currentDate   = new Date();
-        const rowDate       = new Date(req.created_at);
-        let dif             = currentDate - rowDate;
-            dif             = Math.floor(dif/(1000*60*60));
+		//Comparar as datas
+		const currentDate   = new Date();
+		const rowDate       = new Date(req.created_at);
+		let dif             = currentDate - rowDate;
+				dif             = Math.floor(dif/(1000*60*60));
 
-        if (dif >= 2) {
-            return response.status(200).json({"message":"Chave de acesso está fora do prazo permitido", error:true});         
-        }
-        // console.log(req.user_id);
-        const user = await User.findBy('id', req.user_id);
-        user.merge(data);
-        await user.save();
-
-        //apagar token
-        await req.delete();
-        return response.status(200).json({"message":"Sua senha foi alterada com sucesso!", error:false});
-    }
+		if (dif >= 2) {
+			return response.status(403).json({ "message":"Chave de acesso está fora do prazo permitido" });         
+		}
+		
+		try {
+			const user = await User.findBy('id', req.user_id);
+			user.merge(data);
+			await user.save();
+	
+			await req.delete();
+			return response.status(200).json({"message":"Sua senha foi alterada com sucesso!" });
+			
+		} catch (error) {	
+			console.log(error)
+			return response.status(500).json({"message":"Algo de errado aconteceu com nosso servidor, por favor tente novamente mais tarde" })
+		}
+  }
 
     async change_pass({ request, auth, response }) {
 
