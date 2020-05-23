@@ -94,7 +94,7 @@ class MenuController {
     let menu = sections.map((v) => {
       let itens = menuRaw.filter(item => item.section == v);
       i++;
-      return {id:i, section:v, icon:itens[0].icon, itens};
+      return {id:i, section:v, url:itens[0].url, icon:itens[0].icon, itens};
     });
 
 
