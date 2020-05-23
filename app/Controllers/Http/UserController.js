@@ -832,32 +832,35 @@ class UserController {
 		}
   }
 
-    async change_pass({ request, auth, response }) {
+  async change_pass({ request, auth, response }) {
 
-        // get currently authenticated user
-        const user = await User.findBy('id', auth.user.id);
-		const userPass = JSON.parse(JSON.stringify(user)).password;
+    const user = await User.findBy('id', auth.user.id);
+		const userPass = user.password;
 		
-		const {current_password, password} = request.all();
-        // verify if current password matches
-        const verifyPassword = await Hash.verify(
-            current_password,
-            userPass
-        )
+		const { current_password, password } = request.all();
+		
+		const verifyPassword = await Hash.verify(
+				current_password,
+				userPass
+		)
 
-        // display appropriate message
-        if (!verifyPassword) {
-            return response.status(200).json({"message": 'Senha atual invalida', error:true});
-        }
-    
-        // hash and save new password
-        user.password = password;
-        await user.save();
-    
-        return response.status(200).json({"message":"Senha alterada com suecsso!", error:false});
+		if (!verifyPassword) {
+			return response.status(403).json({"message": 'Senha atual invalida'});
+		}
+
+		try {
+			user.password = password;
+			await user.save();
+	
+			return response.status(200).json({"message":"Senha alterada com suecsso!"});
+		} catch (error) {
+			console.log(error)
+			return response.status(500).json({"message":"Algo de errado aconteceu com nosso servidor, por favor tente novamente mais tarde" })
+		}
 	}
 	
-    async delete({ request, auth, response }) {
+	
+	async delete({ request, auth, response }) {
 		const {id} = request.all();
 		if (auth.user.access_level_slug != 'administrador' && auth.user.access_level_slug != 'operador' && auth.user.access_level_slug != 'professor') {
 			return response.status(200).json({message:"Usuário não autorizado", error:true});			
@@ -868,7 +871,7 @@ class UserController {
 		return response.status(200).json({message:"Usuário desativado com sucesso", error:false});
 	}
 
-    async delete_all({ request, auth, response }) {
+  async delete_all({ request, auth, response }) {
 		const {array} = request.all();
 		if (auth.user.access_level_slug != 'administrador' && auth.user.access_level_slug != 'operador' && auth.user.access_level_slug != 'professor') {
 			return response.status(200).json({message:"Usuário não autorizado", error:true});			

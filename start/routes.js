@@ -41,7 +41,7 @@ Route.group(() => {
 
   Route.post('/api/user/request-newpass', 'UserController.request_newpass').validator('RequestNewPassword')
   Route.post('/api/user/set-newpass', 'UserController.set_newpass').validator('SetNewPassword')
-	Route.put('/api/user/change-pass', 'UserController.change_pass').middleware(['auth']);
+	Route.put('/api/user/change-pass', 'UserController.change_pass').middleware(['auth']).validator('ChangePassword')
 	  
   Route.delete('/api/user/delete', 'UserController.delete').middleware(['auth']);
 	Route.delete('/api/user/delete-all', 'UserController.delete_all').middleware(['auth']);
