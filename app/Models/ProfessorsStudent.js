@@ -9,6 +9,14 @@ class ProfessorsStudent extends Model {
 
     this.addHook('afterCreate', 'ProfStudantHook.sendEmail')
   }
+
+  professor (){
+    return this.belongsTo('App/Models/User', 'professor_id')
+  }
+
+  student (){
+    return this.belongsTo('App/Models/User', 'studant_id')
+  }
 }
 
 module.exports = ProfessorsStudent

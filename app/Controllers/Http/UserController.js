@@ -100,23 +100,49 @@ class UserController {
 						solicitations,
 						photo:'/assets/img/avatar/avatar-1.png'
 					}
-					return user;
+					return {user};
 				}else{
 					user = await User.findBy('id', id);
-					await user.load('address');
-			        await user.load('academic');
-			        await user.load('company');
-			        await user.load('solicitations');
-			        return user;
+					await user.load('address')
+					await user.load('academic')
+					await user.load('company')
+					await user.load('solicitations')
+			
+					return response.status(200).json({
+						user:{
+							...user.toJSON(),
+							academic: user.toJSON().academic &&  {
+								...user.toJSON().academic,
+								email_leader: await user.toJSON().academic.email_leader
+							},
+							company: user.toJSON().company && {
+								...user.toJSON().company[0],
+								type_company: user.access_level_slug
+							}
+						}
+					})
 				}
 			break;
 			case "professor":
 				user = await User.findBy('id', id);
-				await user.load('address');
-				await user.load('academic');
-				await user.load('company');
-				await user.load('solicitations');
-				return user;
+				await user.load('address')
+				await user.load('academic')
+				await user.load('company')
+				await user.load('solicitations')
+		
+				return response.status(200).json({
+					user:{
+						...user.toJSON(),
+						academic: user.toJSON().academic &&  {
+							...user.toJSON().academic,
+							email_leader: await user.toJSON().academic.email_leader
+						},
+						company: user.toJSON().company && {
+							...user.toJSON().company[0],
+							type_company: user.access_level_slug
+						}
+					}
+				})
 			break;
 		}
 	}
@@ -130,23 +156,38 @@ class UserController {
 
 		await User.query().where('id', id).update({confirm:1, confirm_email:1, status:1});
 		await ProfStudent.query().where('studant_id', id).update({status:1});
-        return response.status(200).json({message:"Operação realizada com sucesso", error:false});
+    return response.status(200).json({message:"Operação realizada com sucesso", error:false});
 	}
 
 	
 	async token({response, auth}){
+		
 		try {
 			await auth.check();
+			
+			let user = await User.findBy('id', auth.user.id);
+			await user.load('address')
+			await user.load('academic')
+			await user.load('company')
+	
+			return response.status(200).json({
+				user:{
+					...user.toJSON(),
+					academic: user.toJSON().academic &&  {
+						...user.toJSON().academic,
+						email_leader: await user.toJSON().academic.email_leader
+					},
+					company: user.toJSON().company && {
+						...user.toJSON().company[0]
+					}
+				}, 
+				error:false
+			})
+			
 		} catch (error) {
-			return response.status(200).json({message:"Usuário não está logado", error:true});
+			return response.status(403).json({message:"Usuário não está logado", error:true});
 		}
-
-        const user = await User.findBy('id', auth.user.id);
-        await user.load('address');
-        await user.load('academic');
-        await user.load('company');
-        return response.status(200).json({user, error:false});
-    }
+  }
 
 	async authentication({request, response, auth}){
 		const {email, password} = request.all();
@@ -490,90 +531,105 @@ class UserController {
 	}
 
 	async update({request, response, auth}){
-		//get data
-		let academy, check, buff2, buff;
-		let data = request.only(['name','email','birthday','sex','other_email','state','city','phone1', 'phone2'])
-		const {other_email=null, phone2=null, user_id=null, access_level_slug=null} =request.all();
-		const access = ['aluno', 'professor', 'financeiro', 'tecnico', 'operador', 'autonomo', 'administrador'];
+		const data = request.only([
+			'id',
+			'name',
+			'email', 
+			'password',
+			'cpf', 
+			'birthday', 
+			'sex', 
+			'state', 
+			'city', 
+			'phone1',
+			'phone2',
+			'other_email'
+		])
+		let { level } = request.all()
+		let { academic } = request.all()
+		let { address } = request.all()
+		let { company } = request.all()
+
+		let rules, validation, ac
+
+		if (level == 'aluno' || level == 'professor') {
+			rules = {
+				ies:'required',
+				department:'required',
+				title:'required|in:Graduando,Graduado,Especializando,Especialista,Mestrando,Mestre,Doutorando,Doutor',
+				laboratory:'required',
+				research:'required',
+				description:'required'
+			}
+
+			validation = await validate(academic, rules);
+			if (validation.fails()) {
+				return response.status(400).json(validation.messages())
+			}
+		} 
 		
-		//Middleware	
-		if (auth.user.id != user_id && auth.user.access_level_slug != 'administrador' && auth.user.access_level_slug != 'operador') {
-			return response.status(200).json({message:"Usuário não autorizado", error:true});			
+		if (level != 'empresa') {
+			rules = {
+				cep_address:'required',
+				street_address:'required',
+				neighborhood_address:'required',
+				number_address:'required',
+				city_address:'required',
+				state_address:'required'
+			}
+
+			validation = await validate(address, rules);
+			if (validation.fails()) {
+				return response.status(400).json(validation.messages());
+			}
 		}
 
-		//validation
-		//Rules
-		let rules = {
-			name:'required|min:3',
-			email: 'required|email',
-			access_level_slug:'in:aluno,professor,financeiro,tecnico,operador,autonomo,administrador',
-			birthday:'date',
-			sex:'required|min:1|max:2',
-			state:'required',
-			city:'required',
-			phone1:'required'
+		if (level == 'empresa') {
+			rules = {
+				cnpj:'required|min:18|max:18',
+				fantasy_name:'required',
+				company_name:'required',
+				company_email:'required',
+				company_phone:'required',
+				cep:'required',
+				street:'required',
+				neighborhood:'required',
+				number:'required',
+				company_city:'required',
+				company_state:'required',
+				type_company: 'required|in:tecnico,financeiro'
+			}
+			validation = await validate(company, rules);
+			if (validation.fails()) {
+				return response.status(400).json(validation.messages());
+			}
 		}
 
-		//Validation
-		let validation = await validate(data, rules);
-		if (validation.fails()) {
-			return response.status(200).json({...validation.messages()[0], error:true});
+		if (auth.user.access_level_slug == 'administrador' || auth.user.access_level_slug == 'operador') {
+			data.confirm 		= request.input('confirm')
+			data.confirm_email 	= request.input('confirm_email')
+			data.drx_permission = request.input('drx_permission')
+			data.frx_permission = request.input('frx_permission')
+			data.limit 			= request.input('limit')
+			data.status 		= request.input('status')
 		}
 
-		//Check access
-		let type = '';
-		if (access_level_slug == 'aluno' || access_level_slug == 'professor') {
-			type = 'academic';
-		}else if (access_level_slug == 'financeiro' || access_level_slug == 'tecnico') {
-			type = 'company';			
-		}else{
-			type = 'others';			
-		}
+		switch (level) {
+			case 'aluno':
+			case 'professor':
+				const { email_leader } = academic
+				delete academic.email_leader
 
-		switch (type) {
-			case 'academic':
-				academy = request.only(['ies','department','title','laboratory','research','description']);
-				rules = {
-	    			ies:'required',
-	    			department:'required',
-	    			title:'required|in:Graduando,Graduado,Especializando,Especialista,Mestrando,Mestre,Doutorando,Doutor',
-	    			laboratory:'required',
-	    			research:'required',
-	    		}
-
-	    		validation = await validate(academy, rules);
-			    if (validation.fails()) {
-			    	return response.status(200).json({...validation.messages()[0], error:true});
-				}
-
-				check = await Academy.findBy('user_id', user_id);
-				if (check == null) {
-					await Academy.create({...academy, user_id});
-				}else{
-					await Academy.query().where('user_id', user_id).update({...academy});
-				}
-
-				//Check if is adm end check if same field change
+				//Check if is adm end check if field email_leader changed
 				if (auth.user.access_level_slug == 'administrador' || auth.user.access_level_slug == 'operador') {
-					//Parmissão DRX e FRX, limit, confirm adn confirm email - adm and oper
-					data.confirm 		= request.input('confirm');
-					data.confirm_email 	= request.input('confirm_email');
-					data.drx_permission = request.input('drx_permission');
-					data.frx_permission = request.input('frx_permission');
-					data.limit 			= request.input('limit');
-					data.status 		= request.input('status');
-					// console.log(data);
-
-					if (access_level_slug == 'aluno') {
-						const {email_leader=null} = request.all();
-						let prof = await User.query().whereRaw(`email = '${email_leader}' AND access_level_slug IN ('professor', 'administrador', 'operador')`).fetch();
-							prof = conv(prof);
-						if (prof.length == 0) {
+					if (level == 'aluno') {
+						let prof = await User.query().whereRaw(`email = '${email_leader}' AND access_level_slug IN ('professor', 'administrador', 'operador')`).first();
+						if (prof == null) {
 							return response.status(200).json({message:"Professor não encontrado"})
 						}
 
-						let profStudent = await ProfStudent.findBy('studant_id', user_id);
-						if (profStudent.professor_id != prof[0].id) {
+						let profStudent = await ProfStudent.findBy('studant_id', data.id);
+						if (profStudent.professor_id != prof.id) {
 							//Check if this prof has more than 20 active studants
 							let checkProfStudent = await ProfStudent.findBy('professor_id', profStudent.professor_id);
 							checkProfStudent = conv(checkProfStudent);
@@ -584,124 +640,87 @@ class UserController {
 							//Excluir registro de profStudant do aluno
 							profStudent.delete();
 							//add registro com o novo professor, mas status 0 e o status do estudante volta pro 0
-							await ProfStudent.create({professor_id:prof[0].id, studant_id:user_id, status:0});
-							await User.query().where('id', user_id).update({status:0, confirm:0, confirm_email:0});
-							//enviar email pro novo professor com o novo aluno
-							buff  = new Buffer(data.email);
-							buff2 = new Buffer(email_leader);
-							let linkBond = `${Env.get('APP_URL_PROD')}/api/user/confirm-bond?email=${buff.toString('base64')}&&email_leader=${buff2.toString('base64')}`
-							Mail.send('emails.professorConfirmStudant', {linkBond, email_leader, email:data.email, name:data.name}, (message) => {
-							message
-								.to(email_leader)
-								.from('<from-email>')
-								.subject('SLRX - UFC | Confirmação de Vínculo')
-							});
+							await ProfStudent.create({professor_id:prof.id, studant_id:data.id, status:0});
+							await User.query().where('id', data.id).update({status:0, confirm:0, confirm_email:0});
 
 							data.confirm 		= 0;
 							data.confirm_email 	= 0;
 							data.status 		= 0;
-
 						}
 					}
 
 					//Caso ative ou desative o DRX ou FRX do professor
-					if (access_level_slug == 'professor' || access_level_slug == 'administrador' || access_level_slug == 'operador') {
-						let studants_all = await ProfStudent.query().where('professor_id', user_id).fetch();
-						console.log(conv(studants_all))
-						if (conv(studants_all).length > 0) {
-							let studant_id 	= [];
-							studants_all 	= conv(studants_all);
-							for (let i = 0; i < studants_all.length; i++) {
-								studant_id.push(studants_all[i].studant_id);
+					if (level == 'professor' || level == 'administrador' || level == 'operador') {
+						let studants_all = await ProfStudent.query().where('professor_id', data.id).fetch()
+						if (studants_all == null) {
+							if (studants_all.toJSON().length > 0) {
+								let studant_id 	= [];
+								studants_all 	= conv(studants_all);
+								for (let i = 0; i < studants_all.length; i++) {
+									studant_id.push(studants_all[i].studant_id)
+								}
+	
+								studant_id = studant_id.join(',')
+								await User.query().whereRaw(`id IN (${studant_id})`).update({frx_permission:data.frx_permission, drx_permission:data.drx_permission})
 							}
-
-							studant_id = studant_id.join(',');
-							//Atualiza o DRX e FRX de todos os alunos daquele professor
-
-							await User.query().whereRaw(`id IN (${studant_id})`).update({frx_permission:data.frx_permission, drx_permission:data.drx_permission});
 						}
 					}
-					
-				}
-
-				await User.query().where('id', user_id).update({...data, other_email, phone2});
-
-				return response.status(200).json({message:"Dados alterados com sucesso!", error:false});				
-			break;
-			case 'company':
-				let company = request.only(['cnpj','fantasy_name','company_name','state_registration','company_email','company_phone','cep','street','neighborhood','number','company_city','company_state']);
-				let {type_company, company_id} = request.all();
-				rules = {
-	    			cnpj:'required|min:18|max:18',
-	    			fantasy_name:'required',
-	    			company_name:'required',
-	    			company_email:'required',
-	    			company_phone:'required',
-	    			cep:'required',
-	    			street:'required',
-	    			neighborhood:'required',
-	    			number:'required',
-	    			company_city:'required',
-					company_state:'required'
-	    		}
-	    		validation = await validate(company, rules);
-			    if (validation.fails()) {
-			    	return response.status(200).json({...validation.messages()[0], error:true});
-				}
-
-				if(type_company != 'tecnico' && type_company != 'financeiro'){
-					return response.status(200).json({message:"Tipo de usuário de empresa deve ser Técnico ou Financeiro", error:true});
 				}
 				
-				data.access_level = (type_company == 'tecnico') ? 'Técnico' : 'Financeiro';
-				data.access_level_slug = type_company;
 
-				await User.query().where('id', user_id).update({...data, other_email, phone2});
-				await Company.query().where('id', company_id).update({...company}); //Verificar se existe esse dado na tabela
-				return response.status(200).json({message:"Dados alterados com sucesso!", error:false});				
-			break;
-			case 'others':
-				let other = request.only(['cep_address','street_address','neighborhood_address','number_address','city_address','state_address']);
-				let {address_id} = request.all();
-				rules = {
-	    			cep_address:'required',
-					street_address:'required',
-					neighborhood_address:'required',
-					number_address:'required',
-					city_address:'required',
-					state_address:'required'
-	    		}
-
-	    		validation = await validate(other, rules);
-	    		if (validation.fails()) {
-			    	return response.status(200).json({...validation.messages()[0], error:true});
+				try {
+					await User.query().where('id', data.id).update({...data})
+					ac = await Address.findBy('user_id', data.id)
+					if (ac == null) {
+						await Address.create({ ...address, user_id: data.id })
+					}else{
+						await Address.query().where('user_id', data.id).update({ ...address })
+					}
+					return response.status(200).json({
+						message: `Edição dos dados realizada com sucesso!`
+					})
+				} catch (error) {
+					console.log(error)
+					return response.status(500).json({message: "Algo inesperado aconteceu! Por favor tente novamente mais tarde."});
 				}
 
-				await User.query().where('id', user_id).update({...data, other_email, phone2});
-				const checkAdd = await Address.query().where('user_id', user_id).fetch();
-				if (conv(checkAdd).length > 0) {
-					await Address.query().where('user_id', user_id).update({...other});
-				}else{
-					await Address.create({...other, user_id});
-				}
-				return response.status(200).json({message:"Dados alterados com sucesso!", error:false});				
+				break;
+			case 'empresa':
+				//Check if the cnpj exist and if is bond
+				try {
+					const { type_company } = company
+					delete company.type_company
 
-			break;
+					let checkCompany = await Company.query().where('id', company.id).first()
+					
+					data.access_level = (type_company == 'tecnico') ? 'Técnico' : 'Financeiro'
+					await User.query().where('id', data.id).update({...data, access_level_slug: type_company, frx_permission:1 })
+					await Company.query().where('id', checkCompany.id).update({...company})
+					// await CompanyUser.create({ company_datum_id: company.id, user_id: id })
+					return response.status(200).json({message:`Edição dos dados realizada com sucesso!`});
+
+				} catch (error) {
+					console.log(error)
+					return response.status(500).json({message: "Algo inesperado aconteceu! Por favor tente novamente mais tarde."});
+				}
+				
+				break;
 			default:
-				return response.status(200).json({message:"Tipo de usuário não encontrado", error:true});
+				try {
+					await User.query().where('id', data.id).update({...data })
+					ac = await Address.findBy('user_id', data.id)
+					if (ac == null) {
+						await Address.create({ ...address, user_id: data.id })
+					}else{
+						await Address.query().where('user_id', data.id).update({ ...address })
+					}
+					return response.status(200).json({message:`Edição dos dados realizada com sucesso!` });
+				} catch (error) {
+					console.log(error)
+					return response.status(500).json({message: "Algo inesperado aconteceu! Por favor tente novamente mais tarde."});
+				}
 			break;
 		}
-		return 0;
-	}
-
-	async updateby_adm({request, response, auth}){
-		const data = request.all();
-		return data;	
-	}
-
-	async users_pending({request, response, auth}){
-
-		return ;
 	}
 
 	async confirm({request, response, view}){
@@ -757,8 +776,7 @@ class UserController {
     	}
 
     	//If already exist in pivotTable
-    	let prof_st = await ProfStudent.query().where({professor_id:prof.id, studant_id:studant.id}).fetch();
-    	prof_st = JSON.parse(JSON.stringify(prof_st))[0];
+    	let prof_st = await ProfStudent.query().where({professor_id:prof.id, studant_id:studant.id}).first();
 
     	if (prof_st.status == 1) {
     		return view.render('message', {message:"Aluno e Professor já vinculados", error:true});
@@ -768,7 +786,7 @@ class UserController {
     	await ProfStudent.query().where('id', prof_st.id).update({status:1});
 
     	//Atualizar campo confirm
-    	await User.query().where('id', studant.id).update({confirm:1, status:1});
+    	await User.query().where('id', studant.id).update({confirm:1, status:1, confirm_email:1});
 
     	//Enviar email avisando do seu cadastro
     	Mail.send('emails.accessReleased', {email}, (message) => {

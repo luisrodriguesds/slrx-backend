@@ -37,7 +37,6 @@ Route.group(() => {
 
 	Route.post('/api/user', 'UserController.create').validator(['StoreUser'])
 	Route.put('/api/user', 'UserController.update').middleware(['auth']);
-	Route.put('/api/user/update-adm', 'UserController.updateby_adm').middleware(['auth']);
 
   Route.post('/api/user/request-newpass', 'UserController.request_newpass').validator('RequestNewPassword')
   Route.post('/api/user/set-newpass', 'UserController.set_newpass').validator('SetNewPassword')
