@@ -14,8 +14,8 @@ const { validate }  = use('Validator');
 
 //Functions Helpers
 const {
-  formatMoney, 
-  formatDate, 
+  formatMoney,
+  formatDate,
   doc_number,
   date_diff,
   conv,
@@ -33,7 +33,7 @@ const {
 
 //   break;
 //   case 'professor':
-      
+
 //   break;
 //   case 'tecnico':
 //   case 'financeiro':
@@ -109,8 +109,8 @@ class SolicitationController {
     let {settings, quantity=null} = request.all();
     const now = dateformat(Date.now(), 'yyyy-mm-dd HH:MM:ss');
     quantity = (quantity == null) ? 1 : quantity;
-    quantity = (quantity > 20) ? 20 : quantity; // previnir criar infinitas
-    
+    quantity = (quantity > 20) ? (auth.user.access_level_slug == 'administrador' ? quantity : 20) : quantity; // previnir criar infinitas
+
     //Validation
     //Rules
     let rules = {
@@ -184,8 +184,8 @@ class SolicitationController {
     start = start.toJSON();
 
     //Verifica se a contagem dos registro bate com o número da ultima amostra
-    start = ((start.length == 0) ? 1 : (parseInt(start[start.length-1].name.replace(identify, '')))+1);  
-    
+    start = ((start.length == 0) ? 1 : (parseInt(start[start.length-1].name.replace(identify, '')))+1);
+
     //Samples in array
     let array_sample = [];
     let sample_name = [];
@@ -225,7 +225,7 @@ class SolicitationController {
         });
       break;
     }
-    
+
     //Gravar no banco
     try{
       await Database.insert(array_sample).into('solicitations');
@@ -236,7 +236,7 @@ class SolicitationController {
     return response.status(200).json({message:"Amostras cadastradas com sucesso! "+message, error:false});
   }
 
- 
+
   /*
    * Update solicitation details.
    * PUT or PATCH solicitations/:id
@@ -301,7 +301,7 @@ class SolicitationController {
         return response.status(200).json({...validation.messages()[0], error:true});
       }
     }
-  
+
     switch (auth.user.access_level_slug) {
       case 'administrador':
       case 'operador':
@@ -317,16 +317,16 @@ class SolicitationController {
 
           //Você tem estudantes vinculados a você?
           let hasStudant = await ProfStudent.query().where({professor_id:auth.user.id, studant_id:user_id}).fetch();
-              hasStudant = JSON.parse(JSON.stringify(hasStudant));                    
+              hasStudant = JSON.parse(JSON.stringify(hasStudant));
           if (hasStudant.length == 0) {
-              return response.status(406).json({message:message_faul, error:true});      
+              return response.status(406).json({message:message_faul, error:true});
           }
 
           //Este estudante é o dono da amostra?
           if (hasStudant[0].studant_id != user_id) {
-            return response.status(406).json({message:message_faul, error:true});      
+            return response.status(406).json({message:message_faul, error:true});
           }else{
-            await Solicitation.query().where('id', id).update({...data, settings:JSON.stringify(settings)});  
+            await Solicitation.query().where('id', id).update({...data, settings:JSON.stringify(settings)});
             return response.status(200).json({message:message_success, error:false});
           }
 
@@ -342,15 +342,15 @@ class SolicitationController {
             await Solicitation.query().where('id', id).update({...data, settings:JSON.stringify(settings)});
             return response.status(200).json({message:message_success, error:false});
           }else{
-            return response.status(406).json({message:message_faul, error:true});      
+            return response.status(406).json({message:message_faul, error:true});
           }
       break;
     }
-    
+
     return response.status(200).json({message:message_success, error:false});
   }
 
-   
+
 
   /**
    * Display a single solicitation.
@@ -363,7 +363,7 @@ class SolicitationController {
    */
   async show ({ params, response, auth }) {
     let res = [];
-    res = await Solicitation.query().where({name:params.name}).with('equipment').with('gap').with('user').fetch();      
+    res = await Solicitation.query().where({name:params.name}).with('equipment').with('gap').with('user').fetch();
     res = JSON.parse(JSON.stringify(res));
     if (res.length == 0) {
       return response.status(406).json([]);
@@ -378,15 +378,15 @@ class SolicitationController {
           if (res[0].user_id == auth.user.id) {
             return res;
           }
-    
+
           let hasStudant = await ProfStudent.query().where({professor_id:auth.user.id, studant_id:res[0].user_id}).fetch();
           if (hasStudant.length == 0) {
               return response.status(406).json([]);
           }
-    
+
           hasStudant = JSON.parse(JSON.stringify(hasStudant));
           if (hasStudant[0].studant_id != res[0].user_id) {
-            return response.status(406).json([]);        
+            return response.status(406).json([]);
           }
           return res;
       break;
@@ -466,8 +466,8 @@ class SolicitationController {
               solicitations.lastPage = Math.round(count/solicitations.perPage);
 
               for (let i = 0; i < solicitations.data.length; i++) {
-                solicitations.data[i].equipment = {name:solicitations.data[i].equipment_name};       
-                solicitations.data[i].user = {name:solicitations.data[i].user_name, id:solicitations.data[i].user_id};       
+                solicitations.data[i].equipment = {name:solicitations.data[i].equipment_name};
+                solicitations.data[i].user = {name:solicitations.data[i].user_name, id:solicitations.data[i].user_id};
               }
             }
         break;
@@ -512,15 +512,15 @@ class SolicitationController {
               .paginate(page, perPage);
 
               for (let i = 0; i < solicitations.data.length; i++) {
-                solicitations.data[i].equipment = {name:solicitations.data[i].equipment_name};       
-                solicitations.data[i].user = {name:solicitations.data[i].user_name, id:solicitations.data[i].user_id};                       
+                solicitations.data[i].equipment = {name:solicitations.data[i].equipment_name};
+                solicitations.data[i].user = {name:solicitations.data[i].user_name, id:solicitations.data[i].user_id};
               }
         break;
         default:
           solicitations = await Solicitation.query().where({user_id:auth.user.id}).with('equipment').orderByRaw('created_at DESC, name DESC').limit(50).paginate(page, perPage);
         break;
     }
-    
+
     return solicitations;
   }
 
@@ -559,22 +559,22 @@ class SolicitationController {
   async filterby({request}){
 		const {filter, page=1, perPage=50} = request.all();
     let solicitations;
-    
+
     switch (filter) {
       case "Abertas":
         solicitations = await Solicitation.query().where('status', '!=', '7').with('equipment').with('user').orderBy('created_at', 'desc').paginate(page, perPage);
       break;
       case "DRX":
-          solicitations = await Solicitation.query().where('method', '=', 'DRX').with('equipment').with('user').orderBy('created_at', 'desc').paginate(page, perPage);        
+          solicitations = await Solicitation.query().where('method', '=', 'DRX').with('equipment').with('user').orderBy('created_at', 'desc').paginate(page, perPage);
       break;
       case "FRX":
-          solicitations = await Solicitation.query().where('method', '=', 'FRX').with('equipment').with('user').orderBy('created_at', 'desc').paginate(page, perPage);                
+          solicitations = await Solicitation.query().where('method', '=', 'FRX').with('equipment').with('user').orderBy('created_at', 'desc').paginate(page, perPage);
       break;
       case "Filtro":
-          solicitations = await Solicitation.query().with('equipment').with('user').orderBy('created_at', 'desc').paginate(page, perPage);                
+          solicitations = await Solicitation.query().with('equipment').with('user').orderBy('created_at', 'desc').paginate(page, perPage);
       break;
       default:
-          solicitations = await Solicitation.query().where('status', '=', `${filter}`).with('equipment').with('user').orderBy('created_at', 'desc').paginate(page, perPage);                
+          solicitations = await Solicitation.query().where('status', '=', `${filter}`).with('equipment').with('user').orderBy('created_at', 'desc').paginate(page, perPage);
       break;
     }
     return solicitations;
@@ -638,10 +638,10 @@ class SolicitationController {
             count = count.length;
             res.total = count;
             res.lastPage = Math.round(count/res.perPage);
-            
+
             for (let i = 0; i < res.data.length; i++) {
-              res.data[i].equipment = {name:res.data[i].equipment_name};  
-              res.data[i].user = {name:res.data[i].user_name, id:res.data[i].user_id};                       
+              res.data[i].equipment = {name:res.data[i].equipment_name};
+              res.data[i].user = {name:res.data[i].user_name, id:res.data[i].user_id};
             }
           }
       break;
@@ -686,8 +686,8 @@ class SolicitationController {
             .paginate(page, perPage);
 
             for (let i = 0; i < res.data.length; i++) {
-              res.data[i].equipment = {name:res.data[i].equipment_name};   
-              res.data[i].user = {name:res.data[i].user_name, id:res.data[i].user_id};                       
+              res.data[i].equipment = {name:res.data[i].equipment_name};
+              res.data[i].user = {name:res.data[i].user_name, id:res.data[i].user_id};
             }
       break;
       default:
@@ -715,43 +715,43 @@ class SolicitationController {
     switch (auth.user.access_level_slug) {
       case 'administrador':
       case 'operador':
-        
+
         switch (solicitation.status) {
           case 1:
             // 1 -> 2: Somente autorização
             await Solicitation.query().where('id', id).update({status:(solicitation.status+1)});
-            return response.status(200).json({message:"Amostra autorizada com sucesso!", error:false}); 
+            return response.status(200).json({message:"Amostra autorizada com sucesso!", error:false});
           break;
           case 2:
-            // 2 -> 3: [SLRX] Análise da Amostra Nome Autorizada 
+            // 2 -> 3: [SLRX] Análise da Amostra Nome Autorizada
             message = "Amostra autorizada pelo laboratório com sucesso!";
-            title   = `[SLRX] Análise da Amostra ${solicitation.name} Autorizada`;  
+            title   = `[SLRX] Análise da Amostra ${solicitation.name} Autorizada`;
             to      = `emails.solicitationTwoToTree`;
           break;
           case 3:
             // 3 -> 4: [SLRX] Amostra  Nme Entregue ao Laboratório
             message = "Amostra entregue ao laboratório com sucesso!";
-            title   = `[SLRX] Amostra  ${solicitation.name} Entregue ao Laboratório`;  
+            title   = `[SLRX] Amostra  ${solicitation.name} Entregue ao Laboratório`;
             to      = `emails.solicitationTreeToFour`;
-            
+
             await Solicitation.query().where('id', id).update({received_date:`${dateformat(Date.now(), 'yyyy-mm-dd HH:MM:ss')}`});
-        
+
           break;
           case 4:
             // 4 -> 5: [SLRX] Análise da Amostra Nome Em Processo de Análise
             message = "Amostra em processo de análise!";
-            title   = `[SLRX] Análise da Amostra ${solicitation.name} Em Processo de Análise`;  
+            title   = `[SLRX] Análise da Amostra ${solicitation.name} Em Processo de Análise`;
             to      = `emails.solicitationFourToFive`;
-            
+
           break;
           case 5:
             // 5 -> 6: [SLRX] Análise da Amostra Nome Concluída
             message = "Arquivo enviado com sucesso!";
-            title   = `[SLRX] Análise da Amostra ${solicitation.name} Concluída`;  
+            title   = `[SLRX] Análise da Amostra ${solicitation.name} Concluída`;
             to      = `emails.solicitationTwoToTree`;
 
             //Receber o arquivo e colocar na pasta tmp
-           
+
               let sample = request.file('sample', {
                 extnames: ['dat', 'json', 'png', 'jpg', 'jpeg', 'raw', 'txt', 'xrdml', 'xls'],
                 size: '2mb'
@@ -767,7 +767,7 @@ class SolicitationController {
                 name,
                 overwrite: true
               });
-            
+
               if (!sample.moved()) {
                 return response.status(200).json({message:sample.error().message, error:true});
               }
@@ -778,9 +778,9 @@ class SolicitationController {
           case 6:
              // 6 -> 7: [SLRX] Amostra Nome Finalizada!
             message = "Amostra consluída!";
-            title   = `[SLRX] Amostra ${solicitation.name} Finalizada!`;  
+            title   = `[SLRX] Amostra ${solicitation.name} Finalizada!`;
             to      = `emails.solicitationSexToSeven`;
-            
+
             await Solicitation.query().where('id', id).update({conclusion_date:`${dateformat(Date.now(), 'yyyy-mm-dd HH:MM:ss')}`});
 
           break;
@@ -801,7 +801,7 @@ class SolicitationController {
               .subject(title)
         });
 
-        return response.status(200).json({message, error:false}); 
+        return response.status(200).json({message, error:false});
 
       break;
       case 'professor':
@@ -813,32 +813,32 @@ class SolicitationController {
             //Ver se a amostra é dele
             //Ver se essa amostra estar na fase 1
             if (solicitation.user_id != auth.user.id || solicitation.status != 1) {
-              return response.status(200).json({message:"Você tem somente permissão de autorizar a amostra.", error:true});              
+              return response.status(200).json({message:"Você tem somente permissão de autorizar a amostra.", error:true});
             }
 
             //Ver se ele pode passar essa amostra de 1 para 2
             check = await Solicitation.query().whereRaw(`user_id = ${auth.user.id} AND status > 1 AND status < 7`).fetch();
             check = JSON.parse(JSON.stringify(check));
             if (check.length >= 10) {
-              return response.status(200).json({message:"Você excedeu o seu limite de 4 análises de amostras simultânea. Por favor check se não há amostras para serem retiradas do laboratório.", error:true});                            
+              return response.status(200).json({message:"Você excedeu o seu limite de 4 análises de amostras simultânea. Por favor check se não há amostras para serem retiradas do laboratório.", error:true});
             }
 
             //Emails para o sasaki ou para o LRX?
-            
+
             //Emails para ele mesmo?
 
             await Solicitation.query().where('id', id).update({status:2});
-            return response.status(200).json({message:"Amostra autorizada com sucesso!", error:false});                            
+            return response.status(200).json({message:"Amostra autorizada com sucesso!", error:false});
           }else{
             //Amostras do estudante
             //Verificar se amostra não está no passo diferente do 1
             if (solicitation.status != 1) {
-              return response.status(200).json({message:"Você tem somente permissão de autorizar a amostra.", error:true});              
+              return response.status(200).json({message:"Você tem somente permissão de autorizar a amostra.", error:true});
             }
 
             check = await Database.table({ u:'users', ps:'professors_students', s:'solicitations'}).select({id:'s.id',}).whereRaw(`ps.professor_id = '${auth.user.id}' AND ps.studant_id = u.id AND s.user_id IN (u.id, '${auth.user.id}') AND s.status > 1 AND s.status < 7 `).groupBy('s.name').having('s.name', '<=', 2);
             if (check.length >= 20) {
-              return response.status(200).json({message:"Você excedeu o seu limite de 4 análises de amostras simultânea. Por favor check se não há amostras para serem retiradas do laboratório.", error:true});                            
+              return response.status(200).json({message:"Você excedeu o seu limite de 4 análises de amostras simultânea. Por favor check se não há amostras para serem retiradas do laboratório.", error:true});
             }
 
             await Solicitation.query().where('id', id).update({status:2});
@@ -868,12 +868,12 @@ class SolicitationController {
                   case 1:
                     // 1 -> 2: Somente autorização
                     await Solicitation.query().where('id', id).update({status:(solicitation.status+1)});
-                    // return response.status(200).json({message:"Amostra autorizada com sucesso!", error:false}); 
+                    // return response.status(200).json({message:"Amostra autorizada com sucesso!", error:false});
                   break;
                   case 2:
                     //As strings estão impedindo a continuação do código, pq?????????????
-                    // 2 -> 3: [SLRX] Análise da Amostra Nome Autorizada 
-                    // title   = '[SLRX] Análise da Amostra '+solicitation.name+' Autorizada';  
+                    // 2 -> 3: [SLRX] Análise da Amostra Nome Autorizada
+                    // title   = '[SLRX] Análise da Amostra '+solicitation.name+' Autorizada';
                     // body    = '<p>Olá '+solicitation.user.name+',<br> sua solicitação de análise da amostra <b> '+solicitation.name+'</b> foi';
                     // body    +='aprovada pelo responsável e pelo laboratório. Portanto, <strong>estamos aguardando o recebimento da amostra para iniciarmos a análise.</strong></p>';
                     // body    +='<p>O horário de recibemento e entrega de amostras do Laboratório de Raios X é de segunda a sexta nos seguintes horários: 08:30 às 11:30 e 14:00 às 17:00.</p>';
@@ -884,19 +884,19 @@ class SolicitationController {
                   break;
                   case 3:
                     // 3 -> 4: [SLRX] Amostra  Nme Entregue ao Laboratório
-                    // title   = '[SLRX] Amostra  '+solicitation.name+' Entregue ao Laboratório';  
+                    // title   = '[SLRX] Amostra  '+solicitation.name+' Entregue ao Laboratório';
                     // body    = '<p>Olá '+solicitation.user.name+',<br> sua solicitação de análise da amostra <b> '+solicitation.name+'</b> foi';
                     // body   += 'recebida pelo laboratório. No momento ela permanecerá na fila do equipamento <b>'+solicitation.equipment.name+'</b> até que seja analizada.</p>';
                     // body   += '<p>Pedimos que aguarde até o processo ser concluído, quando você receberá um outro email notificando que a amostra entrou em processo de análise.</p>';
                     // body   += '<p>Caso possua alguma dúvida, por favor entre em contato com o Laboratório ';
                     // body   += 'por meio do endereço de email lrxufc@gmail.com, ou pelo telefone 85 33669013.</p>';
                     // body   += '<p style="text-align:right;">Atenciosamente,<br>Laboratório de Raios-X</p>';
-             
+
                     await Solicitation.query().where('id', id).update({received_date:`${dateformat(Date.now(), 'yyyy-mm-dd HH:MM:ss')}`});
                   break;
                   case 4:
                     // 4 -> 5: [SLRX] Análise da Amostra Nome Em Processo de Análise
-                    // title   = '[SLRX] Análise da Amostra '+solicitation.name+' Em Processo de Análise';  
+                    // title   = '[SLRX] Análise da Amostra '+solicitation.name+' Em Processo de Análise';
                     // body    = '<p>Olá '+solicitation.user.name+',<br> sua solicitação de análise da amostra <b> '+solicitation.name+'</b> foi';
                     // body    += 'recebida pelo laboratório. No momento ela permanecerá na fila do equipamento <b>'+solicitation.equipment.name+'</b> entrou em processo de análise.</p>';
                     // body    += '<p>Em no máximo 24 horas, a análise estará pronta. Entretanto, a entrega do resultado será feita após o recolhimento da amostra.</p>';
@@ -906,7 +906,7 @@ class SolicitationController {
                   break;
                   case 6:
                      // 6 -> 7: [SLRX] Amostra Nome Finalizada!
-                    // title   = '[SLRX] Amostra '+solicitation.name+' Finalizada!';  
+                    // title   = '[SLRX] Amostra '+solicitation.name+' Finalizada!';
                     // body    = '<p>Olá '+solicitation.user.name+',<br> sua solicitação de análise da amostra <b> ${solicitation.name}</b>  foi';
                     // body   += 'realizado com sucesso, então agradecemos sua cooperação! Com isso, seu resultado já está disponível em nosso site.</p>';
                     // body   += '<p>Para visualizá-lo acesse o <a href="'+Env.get('APP_URL_PROD')+'" target="_blank">Sistema de Solicitação de Análises de Raios-X</a>.<br>';
@@ -917,7 +917,7 @@ class SolicitationController {
                     // body   += '<p>Caso possua alguma dúvida, por favor entre em contato com o Laboratório ';
                     // body   += 'por meio do endereço de email lrxufc@gmail.com, ou pelo telefone 85 33669013.</p>';
                     // body   += '<p style="text-align:right;">Atenciosamente,<br>Laboratório de Raios-X</p>';
-                    
+
                     await Solicitation.query().where('id', id).update({conclusion_date:`${dateformat(Date.now(), 'yyyy-mm-dd HH:MM:ss')}`});
                   break;
                 }
@@ -932,7 +932,7 @@ class SolicitationController {
                 //       .subject(title)
                 // });
 
-                // return response.status(200).json({message, error:false}); 
+                // return response.status(200).json({message, error:false});
 
               break;
               case 'professor':
@@ -944,19 +944,19 @@ class SolicitationController {
                     //Ver se a amostra é dele
                     //Ver se essa amostra estar na fase 1
                     if (solicitation.user_id == auth.user.id || solicitation.status == 1) {
-                      // return response.status(200).json({message:"Você tem somente permissão de autorizar a amostra.", error:true});              
+                      // return response.status(200).json({message:"Você tem somente permissão de autorizar a amostra.", error:true});
                       //Ver se ele pode passar essa amostra de 1 para 2
                       check = await Solicitation.query().whereRaw(`user_id = ${auth.user.id} AND status > 1 AND status < 7`).fetch();
                       check = JSON.parse(JSON.stringify(check));
                       if (check.length >= 4) {
-                        // return response.status(200).json({message:"Você excedeu o seu limite de 4 análises de amostras simultânea. Por favor check se não há amostras para serem retiradas do laboratório.", error:true});                            
+                        // return response.status(200).json({message:"Você excedeu o seu limite de 4 análises de amostras simultânea. Por favor check se não há amostras para serem retiradas do laboratório.", error:true});
                       }else{
                         //Emails para o sasaki ou para o LRX?
-                        
+
                         //Emails para ele mesmo?
 
                         await Solicitation.query().where('id', id).update({status:2});
-                        // return response.status(200).json({message:"Amostra autorizada com sucesso!", error:false});                            
+                        // return response.status(200).json({message:"Amostra autorizada com sucesso!", error:false});
                       }
 
                     }
@@ -965,11 +965,11 @@ class SolicitationController {
                     //Amostras do estudante
                     //Verificar se amostra não está no passo diferente do 1
                     if (solicitation.status == 1) {
-                      // return response.status(200).json({message:"Você tem somente permissão de autorizar a amostra.", error:true});              
-                    
+                      // return response.status(200).json({message:"Você tem somente permissão de autorizar a amostra.", error:true});
+
                       check = await Database.table({ u:'users', ps:'professors_students', s:'solicitations'}).select({id:'s.id',}).whereRaw(`ps.professor_id = '${auth.user.id}' AND ps.studant_id = u.id AND s.user_id IN (u.id, '${auth.user.id}') AND s.status > 1 AND s.status < 7 `).groupBy('s.name').having('s.name', '<=', 2);
                       if (check.length >= 4) {
-                        // return response.status(200).json({message:"Você excedeu o seu limite de 4 análises de amostras simultânea. Por favor check se não há amostras para serem retiradas do laboratório.", error:true});                            
+                        // return response.status(200).json({message:"Você excedeu o seu limite de 4 análises de amostras simultânea. Por favor check se não há amostras para serem retiradas do laboratório.", error:true});
                       }else{
                         await Solicitation.query().where('id', id).update({status:2});
                         // return response.status(200).json({message:"Amostra autorizada com sucesso!", error:false});
@@ -1008,7 +1008,7 @@ class SolicitationController {
       return response.status(200).json({message:"Solicitação não encontrada.", error:true});
     }
     solicitation = JSON.parse(JSON.stringify(solicitation));
-    
+
     switch (auth.user.access_level_slug) {
       case 'administrador':
       case 'operador':
@@ -1027,7 +1027,7 @@ class SolicitationController {
           }else{
             //Você tem estudantes vinculados a você?
             let hasStudant = await ProfStudent.query().where({professor_id:auth.user.id, studant_id:solicitation.user_id}).fetch();
-                hasStudant = JSON.parse(JSON.stringify(hasStudant));          
+                hasStudant = JSON.parse(JSON.stringify(hasStudant));
             if (hasStudant.length != 0 && hasStudant[0].studant_id != solicitation.user_id) {
               await Solicitation.query().where('name', name).update({status:-1});
               solicitation.status = -1;
@@ -1050,7 +1050,7 @@ class SolicitationController {
 
     return response.status(200).json({message:'Amostra canceladas com successo!', error:false, solicitation});
   }
-  
+
   async destroy_all ({request, response, auth }) {
     const {array} = request.all();
     async function getSol(){
@@ -1073,7 +1073,7 @@ class SolicitationController {
                     solicitation.status = -1;
                   }else{
                     let hasStudant = await ProfStudent.query().where({professor_id:auth.user.id, studant_id:solicitation.user_id}).fetch();
-                    hasStudant = JSON.parse(JSON.stringify(hasStudant));          
+                    hasStudant = JSON.parse(JSON.stringify(hasStudant));
                     if (hasStudant.length != 0 && hasStudant[0].studant_id == solicitation.user_id) {
                         await Solicitation.query().where('id', id).update({status:-1});
                         solicitation.status = -1;
@@ -1082,7 +1082,7 @@ class SolicitationController {
               break;
               case 'tecnico':
               case 'financeiro':
-                //Fazer as críticas later   
+                //Fazer as críticas later
                   await Solicitation.query().where('id', id).update({status:-1});
                   solicitation.status = -1;
               break;
@@ -1112,7 +1112,7 @@ class SolicitationController {
     let {data} = request.all();
     let array_drx = [], array_frx = [], referencia, start, end, res, valor_total, checkQtdPre;
     data = JSON.parse(decodeURIComponent(data));
-    
+
     //Amostras que foram selecionadas na proposta
     let solicitation = await Solicitation.query().whereRaw(`id in (${data.solicitations.join()})`).orderBy('name', 'asc').fetch();
         solicitation = JSON.parse(JSON.stringify(solicitation));
@@ -1162,7 +1162,7 @@ class SolicitationController {
         if (data.frxSemiQuantitativa == null) {
             data.frxSemiQuantitativa = ((data.qtdFrxSemiQuantitativa <= 3) ? 232.00 : ((data.qtdFrxSemiQuantitativa >= 4 && data.qtdFrxSemiQuantitativa <= 10) ? 193.00 : 155.00 ));
         }
-    
+
         //Atualiza valor total
         valor_total+= parseFloat(data.frxSemiQuantitativa)*data.qtdFrxSemiQuantitativa;
     }else{
@@ -1174,21 +1174,21 @@ class SolicitationController {
     if (array_drx.length > 0) {
         data.qtdDrxMedida = array_drx.length;
         if (data.drxMedida == null) {
-            data.drxMedida = ((data.qtdDrxMedida <= 3) ? 328.00 : ((data.qtdDrxMedida >= 4 && data.qtdDrxMedida <= 10) ? 274.00 : 219.00)); 
+            data.drxMedida = ((data.qtdDrxMedida <= 3) ? 328.00 : ((data.qtdDrxMedida >= 4 && data.qtdDrxMedida <= 10) ? 274.00 : 219.00));
         }
         valor_total+=data.qtdDrxMedida*parseFloat(data.drxMedida);
     }
 
     //PRECO PREPARACAO DE AMOSTRA
     if (parseInt(data.qtdPreparacaoDeAmostras) > 0) {
-        checkQtdPre = (((array_drx.length >0) ? array_drx.length : 0) + ((array_frx.length >0) ? array_frx.length : 0)); 
-        
+        checkQtdPre = (((array_drx.length >0) ? array_drx.length : 0) + ((array_frx.length >0) ? array_frx.length : 0));
+
         if (checkQtdPre < parseInt(data.qtdPreparacaoDeAmostras)) {
             data.qtdPreparacaoDeAmostras = checkQtdPre;
         }
 
         if (data.preparacaoDeAmostras == null) {
-            data.preparacaoDeAmostras = ((parseInt(data.qtdPreparacaoDeAmostras) <=3 ) ? 30.0 : ((parseInt(data.qtdPreparacaoDeAmostras) >=4 && parseInt(data.qtdPreparacaoDeAmostras) <=10) ? 20.0 : 10.0));        
+            data.preparacaoDeAmostras = ((parseInt(data.qtdPreparacaoDeAmostras) <=3 ) ? 30.0 : ((parseInt(data.qtdPreparacaoDeAmostras) >=4 && parseInt(data.qtdPreparacaoDeAmostras) <=10) ? 20.0 : 10.0));
         }
         valor_total+=data.qtdPreparacaoDeAmostras*parseFloat(data.preparacaoDeAmostras);
     }
@@ -1197,7 +1197,7 @@ class SolicitationController {
     //PRECO IDENTIFICACAO DE FASE DRX
     if (data.qtdDrxIdentificacao != null) {
         if (data.drxIdentificacao == null) {
-            data.drxIdentificacao = ((data.qtdDrxIdentificacao <= 3) ? 328.00 : ((data.qtdDrxIdentificacao >= 4 && data.qtdDrxIdentificacao <= 10) ? 274.00 : 219.00)); 
+            data.drxIdentificacao = ((data.qtdDrxIdentificacao <= 3) ? 328.00 : ((data.qtdDrxIdentificacao >= 4 && data.qtdDrxIdentificacao <= 10) ? 274.00 : 219.00));
         }
         valor_total+=data.qtdDrxIdentificacao*parseFloat(data.drxIdentificacao);
     }
@@ -1205,7 +1205,7 @@ class SolicitationController {
     //PRECO QUANTIFICACAO DE FASE DRX
     if (data.qtdDrxQuantificacao != null) {
         if (data.drxQuantificacao == null) {
-            data.drxQuantificacao = ((data.qtdDrxQuantificacao <= 3) ? 584.50 : ((data.qtdDrxQuantificacao >= 4 && data.qtdDrxQuantificacao <= 10) ? 584.50 : 584.50)); 
+            data.drxQuantificacao = ((data.qtdDrxQuantificacao <= 3) ? 584.50 : ((data.qtdDrxQuantificacao >= 4 && data.qtdDrxQuantificacao <= 10) ? 584.50 : 584.50));
         }
         valor_total+=data.qtdDrxQuantificacao*parseFloat(data.drxQuantificacao);
     }
@@ -1213,7 +1213,7 @@ class SolicitationController {
     //PRECO CALCULO DE FASE DRX
     if (data.qtdDrxCalculo != null) {
         if (data.drxCalculo == null) {
-            data.drxCalculo = ((data.qtdDrxCalculo <= 3) ? 584.50 : ((data.qtdDrxCalculo >= 4 && data.qtdDrxCalculo <= 10) ? 584.50 : 584.50)); 
+            data.drxCalculo = ((data.qtdDrxCalculo <= 3) ? 584.50 : ((data.qtdDrxCalculo >= 4 && data.qtdDrxCalculo <= 10) ? 584.50 : 584.50));
         }
         valor_total+=data.qtdDrxCalculo*parseFloat(data.drxCalculo);
     }
@@ -1282,11 +1282,11 @@ class SolicitationController {
     //Diff Between dates
     const diffDays = date_diff(data.dataPrazo);
     const numDoc    = await doc_number(user_id);
- 
+
     return view.render('propostas', {data, full, list, valor_total, formatMoney, array_frx, array_drx, diffDays, date:formatDate(new Date), numDoc});
   }
 
-  /* 
+  /*
   * Função para gerar o documento de ordem de serviços
   */
   async ordem ({request, response, auth, view}) {
@@ -1343,7 +1343,7 @@ class SolicitationController {
         if (data.frxSemiQuantitativa == null) {
             data.frxSemiQuantitativa = ((data.qtdFrxSemiQuantitativa <= 3) ? 232.00 : ((data.qtdFrxSemiQuantitativa >= 4 && data.qtdFrxSemiQuantitativa <= 10) ? 193.00 : 155.00 ));
         }
-    
+
         //Atualiza valor total
         valor_total+= parseFloat(data.frxSemiQuantitativa)*data.qtdFrxSemiQuantitativa;
     }else{
@@ -1355,21 +1355,21 @@ class SolicitationController {
     if (array_drx.length > 0) {
         data.qtdDrxMedida = array_drx.length;
         if (data.drxMedida == null) {
-            data.drxMedida = ((data.qtdDrxMedida <= 3) ? 328.00 : ((data.qtdDrxMedida >= 4 && data.qtdDrxMedida <= 10) ? 274.00 : 219.00)); 
+            data.drxMedida = ((data.qtdDrxMedida <= 3) ? 328.00 : ((data.qtdDrxMedida >= 4 && data.qtdDrxMedida <= 10) ? 274.00 : 219.00));
         }
         valor_total+=data.qtdDrxMedida*parseFloat(data.drxMedida);
     }
 
     //PRECO PREPARACAO DE AMOSTRA
     if (parseInt(data.qtdPreparacaoDeAmostras) > 0) {
-        checkQtdPre = (((array_drx.length >0) ? array_drx.length : 0) + ((array_frx.length >0) ? array_frx.length : 0)); 
-        
+        checkQtdPre = (((array_drx.length >0) ? array_drx.length : 0) + ((array_frx.length >0) ? array_frx.length : 0));
+
         if (checkQtdPre < parseInt(data.qtdPreparacaoDeAmostras)) {
             data.qtdPreparacaoDeAmostras = checkQtdPre;
         }
 
         if (data.preparacaoDeAmostras == null) {
-            data.preparacaoDeAmostras = ((parseInt(data.qtdPreparacaoDeAmostras) <=3 ) ? 30.0 : ((parseInt(data.qtdPreparacaoDeAmostras) >=4 && parseInt(data.qtdPreparacaoDeAmostras) <=10) ? 20.0 : 10.0));        
+            data.preparacaoDeAmostras = ((parseInt(data.qtdPreparacaoDeAmostras) <=3 ) ? 30.0 : ((parseInt(data.qtdPreparacaoDeAmostras) >=4 && parseInt(data.qtdPreparacaoDeAmostras) <=10) ? 20.0 : 10.0));
         }
         valor_total+=data.qtdPreparacaoDeAmostras*parseFloat(data.preparacaoDeAmostras);
     }
@@ -1378,7 +1378,7 @@ class SolicitationController {
     //PRECO IDENTIFICACAO DE FASE DRX
     if (data.qtdDrxIdentificacao != null) {
         if (data.drxIdentificacao == null) {
-            data.drxIdentificacao = ((data.qtdDrxIdentificacao <= 3) ? 328.00 : ((data.qtdDrxIdentificacao >= 4 && data.qtdDrxIdentificacao <= 10) ? 274.00 : 219.00)); 
+            data.drxIdentificacao = ((data.qtdDrxIdentificacao <= 3) ? 328.00 : ((data.qtdDrxIdentificacao >= 4 && data.qtdDrxIdentificacao <= 10) ? 274.00 : 219.00));
         }
         valor_total+=data.qtdDrxIdentificacao*parseFloat(data.drxIdentificacao);
     }
@@ -1386,7 +1386,7 @@ class SolicitationController {
     //PRECO QUANTIFICACAO DE FASE DRX
     if (data.qtdDrxQuantificacao != null) {
         if (data.drxQuantificacao == null) {
-            data.drxQuantificacao = ((data.qtdDrxQuantificacao <= 3) ? 584.50 : ((data.qtdDrxQuantificacao >= 4 && data.qtdDrxQuantificacao <= 10) ? 584.50 : 584.50)); 
+            data.drxQuantificacao = ((data.qtdDrxQuantificacao <= 3) ? 584.50 : ((data.qtdDrxQuantificacao >= 4 && data.qtdDrxQuantificacao <= 10) ? 584.50 : 584.50));
         }
         valor_total+=data.qtdDrxQuantificacao*parseFloat(data.drxQuantificacao);
     }
@@ -1394,7 +1394,7 @@ class SolicitationController {
     //PRECO CALCULO DE FASE DRX
     if (data.qtdDrxCalculo != null) {
         if (data.drxCalculo == null) {
-            data.drxCalculo = ((data.qtdDrxCalculo <= 3) ? 584.50 : ((data.qtdDrxCalculo >= 4 && data.qtdDrxCalculo <= 10) ? 584.50 : 584.50)); 
+            data.drxCalculo = ((data.qtdDrxCalculo <= 3) ? 584.50 : ((data.qtdDrxCalculo >= 4 && data.qtdDrxCalculo <= 10) ? 584.50 : 584.50));
         }
         valor_total+=data.qtdDrxCalculo*parseFloat(data.drxCalculo);
     }
@@ -1458,7 +1458,7 @@ class SolicitationController {
       full.state        = user.state;
       full.phone        = user.phone1;
       full.email        = user.email
-      
+
     }
 
 
@@ -1479,7 +1479,7 @@ class SolicitationController {
     }
 
     if (array_drx.length > 0) {
-      if (data.qtdDrxMedida > 0) {        
+      if (data.qtdDrxMedida > 0) {
         relatorio.push({
           desc:'Difração de raios-x (DRX): Medida',
           qtd:array_drx.length,
@@ -1548,7 +1548,7 @@ class SolicitationController {
     let data = [];
     users = await User.query().where('status', 1).paginate(page, perPage);
     online= getRandom(15);
-    
+
     //DRX e FRX
     for (let i = 0; i <= (new Date().getFullYear())-2017; i++) {
       years.push(2017+i);
@@ -1581,7 +1581,7 @@ class SolicitationController {
     data.push({tipo:'drx', count:array_drx.map(v => v.count).reduce((a, c) => a+c ), years:array_drx});
     data.push({tipo:'frx', count:array_frx.map(v => v.count).reduce((a, c) => a+c ), years:array_frx});
     return data;
-  } 
+  }
 
 }
 
