@@ -1228,7 +1228,7 @@ class SolicitationController {
       list.push(v.name)
     })
 
-    list = list.join();
+    // list = list.join();
 
     //USER
     let full = {};

@@ -8,7 +8,7 @@
         body {
             font-family: "DINPro", sans-serif;
         }
-        
+
         body:before {
             content: "";
             display: block;
@@ -22,13 +22,13 @@
             background: url("http://www.raiosx.ufc.br/empresa/images/lrx_background@2x.png");
             background-size: 800px 600px;
         }
-        
+
         .aviso {
             background: rgba(114, 202, 196, 0.4);
             border-radius: 3px;
             padding: 15px;
         }
-        
+
         html {
             border-radius: 10px;
         }
@@ -70,44 +70,50 @@
             <br/><strong> Cidade: </strong>{{full.city}} - {{full.state}}
             <br/><strong> Contato: </strong>{{full.phone ? full.phone : ''}}
             <br/><strong> Email: </strong>{{full.email ? full.email : ''}}
-            <br/> 
+            <br/>
             @if(data.observacoesProposta)
                 {{data.observacoesProposta}}
             @endif
         </div>
         <section>
-            <p> Conforme pedido, referente as solicitações {{list}} o valor a ser cobrado pelos serviços abaixo:
+            <p> Conforme pedido, referente as solicitações <br />
+                @each(lis in list)
+                  {{lis}},
+                @endeach
+              <br />
+              o valor a ser cobrado pelos serviços abaixo:
                 <ul>
-                   @if(data.qtdPreparacaoDeAmostras > 0) 
+                   @if(data.qtdPreparacaoDeAmostras > 0)
                     <li>Preparação de Amostras: {{data.qtdPreparacaoDeAmostras}}*{{formatMoney(data.preparacaoDeAmostras)}} reais</li>
                    @endif
-                   
-                   @if(data.qtdFrxSemiQuantitativa > 0) 
-                    <li>FRX (Semi-quantitativa): {{data.qtdFrxSemiQuantitativa}}*{{formatMoney(data.frxSemiQuantitativa)}} reais</li> 
-                   @endif
-                   
-                   @if(data.qtdDrxMedida > 0) 
-                    <li>DRX (Medida): {{data.qtdDrxMedida}}*{{formatMoney(data.drxMedida)}} reais</li> 
+
+                   @if(data.qtdFrxSemiQuantitativa > 0)
+                    <li>FRX (Semi-quantitativa): {{data.qtdFrxSemiQuantitativa}}*{{formatMoney(data.frxSemiQuantitativa)}} reais</li>
                    @endif
 
-                   @if(data.qtdDrxIdentificacao > 0) 
-                    <li>DRX (Identificação de Fases): {{data.qtdDrxIdentificacao}}*{{formatMoney(data.drxIdentificacao)}} reais</li> 
+                   @if(data.qtdDrxMedida > 0)
+                    <li>DRX (Medida): {{data.qtdDrxMedida}}*{{formatMoney(data.drxMedida)}} reais</li>
                    @endif
 
-                   @if(data.qtdDrxQuantificacao > 0) 
-                    <li>DRX (Quantificação de Fases - Método de Rietveld): {{data.qtdDrxQuantificacao}}*{{formatMoney(data.drxQuantificacao)}} reais</li> 
+                   @if(data.qtdDrxIdentificacao > 0)
+                    <li>DRX (Identificação de Fases): {{data.qtdDrxIdentificacao}}*{{formatMoney(data.drxIdentificacao)}} reais</li>
                    @endif
 
-                   @if(data.qtdDrxCalculo > 0) 
-                    <li>DRX (Cálculo de Tamanho médio de partículas): {{data.drxCalculo}}*{{formatMoney(data.qtdDrxCalculo)}} reais</li> 
+                   @if(data.qtdDrxQuantificacao > 0)
+                    <li>DRX (Quantificação de Fases - Método de Rietveld): {{data.qtdDrxQuantificacao}}*{{formatMoney(data.drxQuantificacao)}} reais</li>
                    @endif
 
-                       
+                   @if(data.qtdDrxCalculo > 0)
+                    <li>DRX (Cálculo de Tamanho médio de partículas): {{data.drxCalculo}}*{{formatMoney(data.qtdDrxCalculo)}} reais</li>
+                   @endif
+
+
                 </ul>
                 <h3>Preço Total: R${{formatMoney(valor_total)}}</h3>
-                <p> A validade da proposta é de {{diffDays}} dias.</section>
+                <p> A validade da proposta é de {{diffDays}} dias.
+              </section>
         <div class="span4 aviso">
-            
+
             <h5>FUNDAÇÃO DE APOIO A SERVIÇOS TÉCNICOS, ENSINO E FOMENTO A PESQUISAS - FUNDAÇÃO ASTEF</h5><strong>CGC:</strong> 08.918.421/0001-08
             <br/><strong>Inscrição Municipal:</strong> 22.6299-1
             <br/><strong>Inscrição Estadual:</strong> 06.211.114-0
