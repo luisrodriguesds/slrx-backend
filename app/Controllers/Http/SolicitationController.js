@@ -1253,7 +1253,7 @@ class SolicitationController {
       full.city         = user.company[0].company_city;
       full.state        = user.company[0].company_state;
       full.phone        = user.phone1;
-    }else if(user.access_level_slug == 'autonomo'){
+    }else{
       full.name         = user.name;
       full.doc          = user.cpf;
       full.street       = user.address.street_address;
@@ -1264,18 +1264,6 @@ class SolicitationController {
       full.state        = user.address.state_address;
       full.email        = user.email
       full.phone        = user.phone1;
-    }else{
-      full.name         = user.name;
-      full.doc          = user.cpf;
-      full.street       = '';
-      full.number       = '';
-      full.cep          = '';
-      full.neighborhood = '';
-      full.city         = user.city;
-      full.state        = user.state;
-      full.phone        = user.phone1;
-      full.email        = user.email
-
     }
 
 
@@ -1437,7 +1425,7 @@ class SolicitationController {
       full.phone        = user.company[0].company_phone;
       full.email        = user.company[0].company_email;
       full.sr           = user.company[0].state_registration == null ? user.company[0].state_registration : '';
-    }else if(user.access_level_slug == 'autonomo'){
+    }else{
       full.name         = user.name;
       full.doc          = user.cpf;
       full.street       = user.address.street_address;
@@ -1446,17 +1434,6 @@ class SolicitationController {
       full.neighborhood = user.address.neighborhood_address;
       full.city         = user.address.city_address;
       full.state        = user.address.state_address;
-      full.email        = user.email
-    }else{
-      full.name         = user.name;
-      full.doc          = user.cpf;
-      full.street       = '';
-      full.number       = '';
-      full.cep          = '';
-      full.neighborhood = '';
-      full.city         = user.city;
-      full.state        = user.state;
-      full.phone        = user.phone1;
       full.email        = user.email
 
     }
