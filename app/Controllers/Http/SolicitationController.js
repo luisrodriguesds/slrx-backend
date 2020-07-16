@@ -1397,8 +1397,8 @@ class SolicitationController {
       listFRX.push(v.name)
     })
 
-    listDRX = listDRX.join();
-    listFRX = listFRX.join();
+    // listDRX = listDRX.join();
+    // listFRX = listFRX.join();
 
     //USER
     let full = {};

@@ -6,47 +6,47 @@
         p {
             font-size: 80%
         }
-        
+
         td {
             font-size: 80%
         }
-        
+
         th {
             font-size: 80%
         }
-        
+
         .text {
             font-size: 75%
         }
-        
+
         .aviso {
             background: #F2F0F1;
             border-radius: 8px;
             padding: 8px;
         }
-        
+
         html {
             border-radius: 10px;
             font-size: 0.9em;
         }
-        
+
         <!--table,
         thead,
         tbody,
         tfoot {
             display: block;
         }
-        
+
         --> td,
         th {
             height: 20px;
             border: 1px solid;
         }
-        
+
         td {
             vertical-align: top;
         }
-        
+
         .cel_centro {
             vertical-align: middle;
             text-align: center;
@@ -128,7 +128,12 @@
                 @each(res in relatorio)
                     <tr>
                         <td width="110px" class="cel_centro">0{{$loop.index+1}}</td>
-                        <td width="640px" class="cel_centro">{{res.desc}} <br/> {{res.list}}</td>
+                        <td width="640px" class="cel_centro">
+                          {{res.desc}} <br/>
+                          @each(lis in res.list)
+                            {{lis}},
+                          @endeach
+                        </td>
                         <td width="110px" class="cel_centro">{{res.qtd}}</td>
                         <td width="130px" class="cel_centro">R$ {{formatMoney(res.preco)}}</td>
                         <td width="120px" class="cel_centro">R$ {{formatMoney(res.total)}}</td>
