@@ -41,10 +41,10 @@ Route.group(() => {
   Route.post('/api/user/request-newpass', 'UserController.request_newpass').validator('RequestNewPassword')
   Route.post('/api/user/set-newpass', 'UserController.set_newpass').validator('SetNewPassword')
 	Route.put('/api/user/change-pass', 'UserController.change_pass').middleware(['auth']).validator('ChangePassword')
-	  
+
   Route.delete('/api/user/delete', 'UserController.delete').middleware(['auth']);
 	Route.delete('/api/user/delete-all', 'UserController.delete_all').middleware(['auth']);
-	  
+
 	Route.post('/api/user/pedding', 'UserController.pedding');
 
 	Route.post('/api/user/picture', 'UserController.picture');
@@ -134,6 +134,13 @@ Route.group(() => {
 	Route.put('/api/useful-files/:id', 'UsefulFileController.update').middleware(['auth']);
 	Route.get('/api/useful-files/donwload/:name', 'UsefulFileController.download');
 	Route.delete('/api/useful-files/destoy/:id', 'UsefulFileController.destroy').middleware(['auth']);
-	
+
 });
+
+//Statistics
+Route.group(() => {
+  Route.get('/api/statistics/samples', 'StatisticController.samples')
+  Route.get('/api/statistics/samples-year', 'StatisticController.samples_year')
+  Route.get('/api/statistics/samples-group', 'StatisticController.sample_groups')
+})
 
