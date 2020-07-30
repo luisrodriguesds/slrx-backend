@@ -36,7 +36,6 @@ class StatisticController {
         let [queryStatisticFRX, ] = await Database.raw(`SELECT name, created_at, method, COUNT(*) FROM solicitations WHERE method = 'FRX' AND created_at BETWEEN DATE_ADD(CURDATE(), INTERVAL -365 DAY) AND CURDATE()+1 GROUP BY MONTH(created_at) HAVING COUNT(*) > 1 ORDER BY created_at DESC`)
         for (let i = 12; i > 0; i--) {
           data.setMonth(data.getMonth() - i)
-          console.log(data);
           count_drx = queryStatistic.filter(v => (dateformat(v.created_at, 'mm/yy') == dateformat(data, 'mm/yy') ) )
           count_frx = queryStatisticFRX.filter(v => (dateformat(v.created_at, 'mm/yy') == dateformat(data, 'mm/yy') ) )
           arr_date.push(dateformat(data, 'mmmm'))
