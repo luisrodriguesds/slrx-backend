@@ -1256,12 +1256,12 @@ class SolicitationController {
     }else{
       full.name         = user.name;
       full.doc          = user.cpf;
-      full.street       = user.address.street_address;
-      full.number       = user.address.number_address;
-      full.cep          = user.address.cep_address;
-      full.neighborhood = user.address.neighborhood_address;
-      full.city         = user.address.city_address;
-      full.state        = user.address.state_address;
+      full.street       = user.address ? user.address.street_address: 'Não informado'
+      full.number       = user.address ? user.address.number_address: 'Não informado'
+      full.cep          = user.address ? user.address.cep_address: 'Não informado'
+      full.neighborhood = user.address ? user.address.neighborhood_address: 'Não informado'
+      full.city         = user.address ? user.address.city_address: 'Não informado'
+      full.state        = user.address ? user.address.state_address: 'Não informado'
       full.email        = user.email
       full.phone        = user.phone1;
     }
@@ -1428,12 +1428,12 @@ class SolicitationController {
     }else{
       full.name         = user.name;
       full.doc          = user.cpf;
-      full.street       = user.address.street_address;
-      full.number       = user.address.number_address;
-      full.cep          = user.address.cep_address;
-      full.neighborhood = user.address.neighborhood_address;
-      full.city         = user.address.city_address;
-      full.state        = user.address.state_address;
+      full.street       = user.address ? user.address.street_address : 'Não informado'
+      full.number       = user.address ? user.address.number_address : 'Não informado'
+      full.cep          = user.address ? user.address.cep_address : 'Não informado'
+      full.neighborhood = user.address ? user.address.neighborhood_address : 'Não informado'
+      full.city         = user.address ? user.address.city_address : 'Não informado'
+      full.state        = user.address ? user.address.state_address : 'Não informado'
       full.email        = user.email
 
     }

@@ -99,6 +99,7 @@ Route.group(() => {
 Route.group(() => {
 	Route.post('/api/documents/proposta', 'DocumentController.store_proposta').middleware(['auth']);
 	Route.get('/api/documents/proposta', 'DocumentController.index_proposta').middleware(['auth']);
+	Route.get('/api/documents', 'DocumentController.index').middleware(['auth']);
 	Route.delete('/api/documents/proposta', 'DocumentController.delete_proposta').middleware(['auth']);
 
 });

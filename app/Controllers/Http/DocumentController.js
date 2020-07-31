@@ -10,7 +10,12 @@ const {
 	conv
   } = use('App/Helpers');
 class DocumentController {
-  
+
+  async index({ request, response, auth}) {
+    const docs = await Document.query().with('user').orderBy('created_at', 'DESC').fetch()
+    return response.json(docs)
+  }
+
   async index_proposta ({request, response, auth}) {
   	const {user_id} = request.all();
 	let doc
@@ -47,13 +52,12 @@ class DocumentController {
 			return doc;
 		break;
 	}
-  	
+
   }
 
   async store_proposta ({request, response, auth}) {
   	let {user_id, url} = request.all();
 	let data = JSON.parse(decodeURIComponent(url));
-	console.log(data.name)
 
 	if (data.name) {
 		let user_id_name = await User.query().where('name', 'like', `%${data.name}%`).fetch()
@@ -62,10 +66,10 @@ class DocumentController {
 		}
 	}
 
-  	//Selecionar user
+  //Selecionar user
 	const user = await User.findBy('id', user_id);
 
-	
+
   	//Enviar email para user
 	  Mail.send('emails.sendProposta', {user, url:`${Env.get('APP_URL_PROD')}/api/solictation/proposta?data=${url}`}, (message) => {
 		message
@@ -75,7 +79,7 @@ class DocumentController {
 	});
 
   	//Gravar no banco
-  	const res = await Document.create({user_id, type:'proposta', url});
+  	await Document.create({user_id, type:'proposta', url});
 
   	//Returno to page
   	return response.status(200).json({message:"Proposta enviada com sucesso!", error:false});
@@ -110,8 +114,8 @@ class DocumentController {
 	// 			.subject(`SLRX - UFC | ${data.subject}`)
 	// 		});
 	// 	})
-	
-	users.toJSON().map((user,i) => { 
+
+	users.toJSON().map((user,i) => {
 		console.log(user.email, user.id)
 		let email = user.email;
 		let dados = {assunto:`SLRX | ${data.subject}`, corpo:data.message, email};
@@ -119,13 +123,13 @@ class DocumentController {
 			url:'http://csdint.fisica.ufc.br/solicitacoes/send-email.php',
 			form: {email:JSON.stringify(dados)}
 		};
-		Request.post(op, (err,httpResponse,body) =>{ 
+		Request.post(op, (err,httpResponse,body) =>{
 			console.log(body);
 		});
 	})
-	 
+
 	return response.status(200).json({message:"Emails enviados com sucesso!", error:false});
-	  
+
   }
 
 }
