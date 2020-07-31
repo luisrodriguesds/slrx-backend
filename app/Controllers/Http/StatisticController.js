@@ -10,7 +10,7 @@ class StatisticController {
     let data = new Date(), arr_date = [], count_drx=0, arr_count_drx=[], count_frx=0, arr_count_frx=[]
     switch (period) {
       case 'day':
-        [queryStatistic, ] = await Database.raw(`SELECT name, created_at, method, COUNT(*) FROM solicitations WHERE created_at BETWEEN DATE_ADD(CURDATE(), INTERVAL -${value} DAY) AND CURDATE()+1 GROUP BY DAY(created_at) HAVING COUNT(*) > 1 ORDER BY created_at DESC`)
+        [queryStatistic, ] = await Database.raw(`SELECT name, created_at, method, COUNT(*) FROM solicitations WHERE created_at BETWEEN DATE_ADD(CURDATE(), INTERVAL -${value} DAY) AND DATE_ADD(CURDATE(), INTERVAL + 1 DAY) GROUP BY DAY(created_at) HAVING COUNT(*) > 1 ORDER BY created_at DESC`)
 
         for (let i = Number(value); i >= 0; i--) {
             data.setDate(data.getDate() - i)
@@ -32,8 +32,8 @@ class StatisticController {
 
       default:
         //Parei em mostrar resultado de cada mês
-        [queryStatistic, ] = await Database.raw(`SELECT name, created_at, method, COUNT(*) FROM solicitations WHERE method = 'DRX' AND created_at BETWEEN DATE_ADD(CURDATE(), INTERVAL -365 DAY) AND CURDATE()+1 GROUP BY MONTH(created_at) HAVING COUNT(*) > 1 ORDER BY created_at DESC`)
-        let [queryStatisticFRX, ] = await Database.raw(`SELECT name, created_at, method, COUNT(*) FROM solicitations WHERE method = 'FRX' AND created_at BETWEEN DATE_ADD(CURDATE(), INTERVAL -365 DAY) AND CURDATE()+1 GROUP BY MONTH(created_at) HAVING COUNT(*) > 1 ORDER BY created_at DESC`)
+        [queryStatistic, ] = await Database.raw(`SELECT name, created_at, method, COUNT(*) FROM solicitations WHERE method = 'DRX' AND created_at BETWEEN DATE_ADD(CURDATE(), INTERVAL -1 YEAR) AND DATE_ADD(CURDATE(), INTERVAL + 1 DAY) GROUP BY MONTH(created_at) HAVING COUNT(*) > 1 ORDER BY created_at DESC`)
+        let [queryStatisticFRX, ] = await Database.raw(`SELECT name, created_at, method, COUNT(*) FROM solicitations WHERE method = 'FRX' AND created_at BETWEEN DATE_ADD(CURDATE(), INTERVAL -1 YEAR) AND DATE_ADD(CURDATE(), INTERVAL + 1 DAY) GROUP BY MONTH(created_at) HAVING COUNT(*) > 1 ORDER BY created_at DESC`)
         for (let i = 12; i > 0; i--) {
           data.setMonth(data.getMonth() - i)
           count_drx = queryStatistic.filter(v => (dateformat(v.created_at, 'mm/yy') == dateformat(data, 'mm/yy') ) )
