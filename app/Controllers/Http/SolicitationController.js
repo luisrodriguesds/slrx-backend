@@ -129,7 +129,7 @@ class SolicitationController {
     //Validation
     let validation = await validate(data, rules);
     if (validation.fails()) {
-      return response.status(200).json({...validation.messages()[0], error:true});
+      return response.status(400).json({...validation.messages()[0], error:true});
     }
 
     if (data.method == 'DRX') {
@@ -144,9 +144,9 @@ class SolicitationController {
       //Validation
       let validation = await validate(settings, rules);
       if (validation.fails()) {
-        return response.status(200).json({...validation.messages()[0], error:true});
+        return response.status(400).json({...validation.messages()[0], error:true});
       }else if (user.drx_permission == 0) {
-        return response.status(200).json({message:"Você não tem permissão para cadastrar amostra de análise DRX", error:true});
+        return response.status(401).json({message:"Você não tem permissão para cadastrar amostra de análise DRX", error:true});
       }
 
     }else{
@@ -160,9 +160,9 @@ class SolicitationController {
       //Validation
       let validation = await validate(settings, rules);
       if (validation.fails()) {
-        return response.status(200).json({...validation.messages()[0], error:true});
+        return response.status(400).json({...validation.messages()[0], error:true});
       }else if (user.frx_permission == 0) {
-        return response.status(200).json({message:"Você não tem permissão para cadastrar amostra de análise FRX", error:true});
+        return response.status(401).json({message:"Você não tem permissão para cadastrar amostra de análise FRX", error:true});
       }
     }
 
