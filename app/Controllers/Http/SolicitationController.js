@@ -274,7 +274,7 @@ class SolicitationController {
     //Validation
     let validation = await validate(data, rules);
     if (validation.fails()) {
-      return response.status(200).json({...validation.messages()[0], error:true});
+      return response.status(400).json({...validation.messages()[0], error:true});
     }
 
     if (data.method == 'DRX') {
@@ -289,7 +289,7 @@ class SolicitationController {
       //Validation
       let validation = await validate(settings, rules);
       if (validation.fails()) {
-        return response.status(200).json({...validation.messages()[0], error:true});
+        return response.status(400).json({...validation.messages()[0], error:true});
       }
 
     }else{
@@ -303,7 +303,7 @@ class SolicitationController {
       //Validation
       let validation = await validate(settings, rules);
       if (validation.fails()) {
-        return response.status(200).json({...validation.messages()[0], error:true});
+        return response.status(400).json({...validation.messages()[0], error:true});
       }
     }
 

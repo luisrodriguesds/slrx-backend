@@ -54,8 +54,8 @@ class StatisticController {
   }
 
   async samples_year({ response }){
-    const [queryDRX, ] = await Database.raw(`SELECT name, created_at, method, COUNT(*) FROM solicitations WHERE method = 'DRX' GROUP BY YEAR(created_at) HAVING COUNT(*) > 1 ORDER BY created_at ASC`)
-    const [queryFRX, ] = await Database.raw(`SELECT name, created_at, method, COUNT(*) FROM solicitations WHERE method = 'FRX' GROUP BY YEAR(created_at) HAVING COUNT(*) > 1 ORDER BY created_at ASC`)
+    const [queryDRX, ] = await Database.raw(`SELECT name, created_at, method, COUNT(*) FROM solicitations WHERE method = 'DRX' AND status > 5 GROUP BY YEAR(created_at) HAVING COUNT(*) > 1 ORDER BY created_at ASC`)
+    const [queryFRX, ] = await Database.raw(`SELECT name, created_at, method, COUNT(*) FROM solicitations WHERE method = 'FRX' AND status > 5 GROUP BY YEAR(created_at) HAVING COUNT(*) > 1 ORDER BY created_at ASC`)
 
     let statistics = []
     for (let i = 2017; i <= (new Date().getFullYear()); i++) {
@@ -81,14 +81,14 @@ class StatisticController {
     let query
     switch (year) {
       case 'until-now':
-        [query, ] = await Database.raw(`SELECT u.id, u.name, u.email, u.access_level, a.laboratory, a.user_id, s.user_id, s.created_at, s.name, COUNT(*) FROM users as u, academic_data as a, solicitations as s WHERE u.access_level in ('Professor', 'Aluno') AND u.id = a.user_id AND s.user_id = u.id GROUP BY a.laboratory HAVING COUNT(*) > 1;`)
+        [query, ] = await Database.raw(`SELECT u.id, u.name, u.email, u.access_level, a.laboratory, a.user_id, s.user_id, s.created_at, s.name, COUNT(*) FROM users as u, academic_data as a, solicitations as s WHERE u.access_level in ('Professor', 'Aluno') AND u.id = a.user_id AND s.status > 5 AND s.user_id = u.id GROUP BY a.laboratory HAVING COUNT(*) > 1`)
         return response.json({
           statistics: query
         })
         break;
 
       default:
-        [query, ] = await Database.raw(`SELECT u.id, u.name, u.email, u.access_level, a.laboratory, a.user_id, s.user_id, s.created_at, s.name, COUNT(*) FROM users as u, academic_data as a, solicitations as s WHERE u.access_level in ('Professor', 'Aluno') AND u.id = a.user_id AND s.user_id = u.id AND YEAR(s.created_at) = ${year} GROUP BY a.laboratory HAVING COUNT(*) > 1;`)
+        [query, ] = await Database.raw(`SELECT u.id, u.name, u.email, u.access_level, a.laboratory, a.user_id, s.user_id, s.created_at, s.name, COUNT(*) FROM users as u, academic_data as a, solicitations as s WHERE u.access_level in ('Professor', 'Aluno') AND u.id = a.user_id AND s.status > 5 AND s.user_id = u.id AND YEAR(s.created_at) = ${year} GROUP BY a.laboratory HAVING COUNT(*) > 1`)
         return response.json({
           statistics: query
         })
