@@ -100,6 +100,11 @@ class SolicitationController {
         user = auth.user.toJSON()
        }else{
          user = await User.findBy('id', user)
+         if (user ==  null) {
+           return response.status(401).json({
+             message: 'Usuário não encontrado, verifique se este usuário é uma empresa, caso sim, selecione um de seus funcionário para realizar o pedido de amostra.'
+           })
+         }
        }
     }else{
       user = auth.user.toJSON()
