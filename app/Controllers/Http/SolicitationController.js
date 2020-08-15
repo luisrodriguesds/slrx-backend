@@ -1012,7 +1012,7 @@ class SolicitationController {
     if (solicitation == null) {
       return response.status(200).json({message:"Solicitação não encontrada.", error:true});
     }
-    solicitation = JSON.parse(JSON.stringify(solicitation));
+    solicitation = solicitation.toJSON();
 
     switch (auth.user.access_level_slug) {
       case 'administrador':
@@ -1046,7 +1046,7 @@ class SolicitationController {
           solicitation.status = -2;
       break;
       default:
-          if (auth.user.id == solicitation.user_id) {
+          if (auth.user.id == solicitation.user_id && solicitation.status < 2) {
             await Solicitation.query().where('name', name).update({status:-1});
             solicitation.status = -1;
           }
@@ -1092,7 +1092,7 @@ class SolicitationController {
                   solicitation.status = -1;
               break;
               default:
-                  if (auth.user.id == solicitation.user_id) {
+                  if (auth.user.id == solicitation.user_id && solicitation.status < 2) {
                     await Solicitation.query().where('id', id).update({status:-1});
                     solicitation.status = -1;
                   }
