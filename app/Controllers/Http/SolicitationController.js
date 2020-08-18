@@ -753,17 +753,17 @@ class SolicitationController {
             // 5 -> 6: [SLRX] Análise da Amostra Nome Concluída
             message = "Arquivo enviado com sucesso!";
             title   = `[SLRX] Análise da Amostra ${solicitation.name} Concluída`;
-            to      = `emails.solicitationTwoToTree`;
+            to      = `emails.solicitationFiveToSex`;
 
             //Receber o arquivo e colocar na pasta tmp
 
               let sample = request.file('sample', {
-                extnames: ['dat', 'json', 'png', 'jpg', 'jpeg', 'raw', 'txt', 'xrdml', 'xls'],
+                extnames: ['dat', 'json', 'png', 'jpg', 'jpeg', 'raw', 'RAW','txt', 'xrdml', 'xls'],
                 size: '2mb'
               });
-              // console.log(sample);
+
               if (sample === null) {
-                return response.status(200).json({message:"Arquivo da medida é necessário para avançar para o próximo passo.", error:true});
+                return response.status(400).json({message:"Arquivo da medida é necessário para avançar para o próximo passo.", error:true});
               }
 
               const {extname} = sample;
@@ -774,7 +774,7 @@ class SolicitationController {
               });
 
               if (!sample.moved()) {
-                return response.status(200).json({message:sample.error().message, error:true});
+                return response.status(400).json({message:sample.error().message, error:true});
               }
 
               await Solicitation.query().where('id', id).update({download:name});
@@ -854,7 +854,6 @@ class SolicitationController {
         return response.status(406).json({message:"Usuário não autorizado", error:true});
       break;
     }
-    return solicitation;
   }
 
   async next_step_all ({ params, request, response, auth }) {
