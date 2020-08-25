@@ -1237,12 +1237,19 @@ class SolicitationController {
     //USER
     let full = {};
     let user_id = (array_frx.length > 0) ? array_frx[0].user_id : array_drx[0].user_id;
+    let is_company = ''
     if (data.name) {
       let user_id_name = await User.query().where('name', 'like', `%${data.name}%`).fetch()
-      if (user_id_name.toJSON().length > 0) {
+      if (user_id_name.rows.length > 0) {
         user_id = user_id_name.toJSON()[0].id
+      }else{
+        user_id_name = await Company.query().where('fantasy_name', 'like', `%${data.name}%`).orWhere('company_name', 'like', `%${data.name}%`).fetch()
+        if (user_id_name.rows.length > 0) {
+          is_company = user_id_name.toJSON()
+        }
       }
     }
+
     let user = await User.findBy('id', user_id)
         await user.load('company');
         await user.load('address');
@@ -1256,6 +1263,16 @@ class SolicitationController {
       full.neighborhood = user.company[0].neighborhood;
       full.city         = user.company[0].company_city;
       full.state        = user.company[0].company_state;
+      full.phone        = user.phone1;
+    }else if(is_company){
+      full.name         = is_company[0].company_name;
+      full.doc          = is_company[0].cnpj;
+      full.street       = is_company[0].street;
+      full.number       = is_company[0].number;
+      full.cep          = is_company[0].cep;
+      full.neighborhood = is_company[0].neighborhood;
+      full.city         = is_company[0].company_city;
+      full.state        = is_company[0].company_state;
       full.phone        = user.phone1;
     }else{
       full.name         = user.name;
@@ -1407,10 +1424,16 @@ class SolicitationController {
     //USER
     let full = {};
     let user_id = (array_frx.length > 0) ? array_frx[0].user_id : array_drx[0].user_id;
+    let is_company = ''
     if (data.name) {
       let user_id_name = await User.query().where('name', 'like', `%${data.name}%`).fetch()
       if (user_id_name.toJSON().length > 0) {
         user_id = user_id_name.toJSON()[0].id
+      }else{
+        user_id_name = await Company.query().where('fantasy_name', 'like', `%${data.name}%`).orWhere('company_name', 'like', `%${data.name}%`).fetch()
+        if (user_id_name.rows.length > 0) {
+          is_company = user_id_name.toJSON()
+        }
       }
     }
     let user = await User.findBy('id', user_id)
@@ -1429,6 +1452,16 @@ class SolicitationController {
       full.phone        = user.company[0].company_phone;
       full.email        = user.company[0].company_email;
       full.sr           = user.company[0].state_registration == null ? user.company[0].state_registration : '';
+    }else if(is_company){
+      full.name         = is_company[0].company_name;
+      full.doc          = is_company[0].cnpj;
+      full.street       = is_company[0].street;
+      full.number       = is_company[0].number;
+      full.cep          = is_company[0].cep;
+      full.neighborhood = is_company[0].neighborhood;
+      full.city         = is_company[0].company_city;
+      full.state        = is_company[0].company_state;
+      full.phone        = user.phone1;
     }else{
       full.name         = user.name;
       full.doc          = user.cpf;

@@ -57,26 +57,30 @@ class DocumentController {
 
   async store_proposta ({request, response, auth}) {
   	let {user_id, url} = request.all();
-	let data = JSON.parse(decodeURIComponent(url));
+		let data = JSON.parse(decodeURIComponent(url));
 
 	if (data.name) {
 		let user_id_name = await User.query().where('name', 'like', `%${data.name}%`).fetch()
-		if (user_id_name.toJSON().length > 0) {
+		if (user_id_name.rows.length > 0) {
 			user_id = user_id_name.toJSON()[0].id
 		}
 	}
 
   //Selecionar user
 	const user = await User.findBy('id', user_id);
-
+	if (user == null) {
+		return response.status(400).json({
+			message: 'Usuário não pode ser encontrado'
+		})
+	}
 
   	//Enviar email para user
 	  Mail.send('emails.sendProposta', {user, url:`${Env.get('APP_URL_PROD')}/api/solictation/proposta?data=${url}`}, (message) => {
-		message
-			.to(user.email)
-			.from('<from-email>')
-			.subject('SLRX - UFC | Proposta LRX')
-	});
+			message
+				.to(user.email)
+				.from('<from-email>')
+				.subject('SLRX - UFC | Proposta LRX')
+		});
 
   	//Gravar no banco
   	await Document.create({user_id, type:'proposta', url});
